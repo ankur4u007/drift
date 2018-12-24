@@ -35,26 +35,33 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
     fun getWSClient() :  Disposable{
         val url = if (clientConfig.remoteServer?.url?.endsWith("/") == true) clientConfig.remoteServer?.url else clientConfig.remoteServer?.url.plus("/")
         val fullUrl = URI.create(clientConfig.remoteServer?.url).resolve("/websocket?key=${clientConfig.remoteServer?.key}")
-        return ReactorNettyWebSocketClient().execute(fullUrl, { session ->
+        return ReactorNettyWebSocketClient().execute(fullUrl, connectWs())
+                .doOnError {
+                    log.error(it.message, it)
+                }.retry { it is ClientNotRespondingException || it is ConnectException }.subscribe()
+    }
+
+    private fun connectWs(): (WebSocketSession) -> Mono<Void> {
+        return { session ->
             val response = session.receive().flatMap {
                 it.payloadAsText.parseToType(Gossip::class.java).flatMap {
                     clientEventHandlerService.handle(it)
                 }
             }.then()
-            val request = session.send (
-                    ping().map { Gossip(event = Event.CLIENT_PING)
+            val request = session.send(
+                    ping().map {
+                        Gossip(event = Event.CLIENT_PING)
                     }.flatMap {
                         val incrementPing = clientCacheService.incrementPing()
-                        if (incrementPing > clientConfig.remoteServer?.ping?.maxMisses ?: MAX_PING_MISSES == true) {
+                        if (incrementPing > clientConfig.remoteServer?.ping?.maxMisses ?: MAX_PING_MISSES) {
                             Flux.error(ClientNotRespondingException(it))
                         } else {
                             Flux.just(it)
-                        } }.map { session.textMessage(it.writeValueAsString()) }
+                        }
+                    }.map { session.textMessage(it.writeValueAsString()) }
             )
             Mono.zip(response, request).then()
-        }).doOnError {
-            log.error(it.message, it)
-        }.retry { it is ClientNotRespondingException || it is ConnectException }.subscribe()
+        }
     }
 
     fun ping(): Flux<Long> {
