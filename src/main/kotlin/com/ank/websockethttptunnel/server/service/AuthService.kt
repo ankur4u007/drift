@@ -1,8 +1,8 @@
 package com.ank.websockethttptunnel.server.service
 
 import com.ank.websockethttptunnel.common.model.Gossip
-import com.ank.websockethttptunnel.server.Exception.ForbiddenException
 import com.ank.websockethttptunnel.server.config.ServerConfig
+import com.ank.websockethttptunnel.server.exception.ForbiddenException
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -20,7 +20,7 @@ class AuthService @Inject constructor(val serverConfig: ServerConfig) {
         return if (key == "key=${serverConfig.key}") {
             Flux.just(Gossip(status = HttpResponseStatus.OK.code(), message = "Client:$id registered successFully"))
         } else {
-            log.error("${AuthService::authenticate.name}, Invalid $key")
+            log.error("${AuthService::authenticate.name}, Invalid $key, sessionId=$id")
             Flux.error(ForbiddenException(Gossip(status = HttpResponseStatus.FORBIDDEN.code(), message = "Client registration failed")))
         }
     }

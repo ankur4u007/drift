@@ -3,12 +3,16 @@ server:
 
 tunnel:
   server:
+    enabled: true
     key: "2b625f93-7006-47e2-a469-f41ec3dc7442"
-
   client:
-    server:
-      url:  http://localhost:8000
+    enabled: true
+    remoteServer:
+      url:  ws://localhost:8080
       key: "2b625f93-7006-47e2-a469-f41ec3dc7442"
+      ping:
+        durationInSec: 1
+        delayInSec: 1
     localServer:
       url: http://localhost:9000
 
