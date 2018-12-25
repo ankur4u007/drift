@@ -1,7 +1,6 @@
 package com.ank.websockethttptunnel.server.transport.http
 
 import com.ank.websockethttptunnel.common.model.Payload
-import com.ank.websockethttptunnel.common.util.writeValueAsString
 import com.ank.websockethttptunnel.server.service.WebHttpSocketDelegator
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -17,13 +16,11 @@ class WebHttpHandler @Inject constructor(val webHttpSocketDelegator: WebHttpSock
 
     fun handle() : RouterFunction<ServerResponse> {
         return router {
-            log.info("${WebHttpHandler::handle.name}, 1 received request for ${this.writeValueAsString()}")
             path("/**").and {
                !it.path().contains("/websocket")
             }.invoke { request ->
-                    log.info("${WebHttpHandler::handle.name}, 2 received request for ${this.writeValueAsString()}")
                     request.bodyToMono(String::class.java).defaultIfEmpty("").flatMap { bodyAsText ->
-                                log.info("${WebHttpHandler::handle.name}, 3 received request for ${request.path()}")
+                                log.info("${WebHttpHandler::handle.name}, Received request for path=${request.path()}")
                                 val payload = Payload(method = request.method(),
                                         url = request.path(),
                                         queryParams = request.queryParams().toMutableMap(),
