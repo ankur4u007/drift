@@ -23,8 +23,8 @@ class ServerEventHandlerService @Inject constructor(val sessionCacheService: Ses
                 Mono.just(Gossip(event = Event.SERVER_PONG, status = HttpResponseStatus.OK.code()))
             }
             Event.CLIENT_RESPOND -> {
-                sessionCacheService.savePayload(gossip)
                 sessionCacheService.updateClientTimestamp(sessionId)
+                sessionCacheService.savePayload(gossip)
                 Mono.just(Gossip(requestId = gossip.requestId, event = Event.SERVER_REQUEST_ACK, status = HttpResponseStatus.OK.code()))
             }
             else -> Mono.error(BadRequestException(Gossip(status = HttpResponseStatus.BAD_REQUEST.code(), message = "event:${gossip.event} not supported")))

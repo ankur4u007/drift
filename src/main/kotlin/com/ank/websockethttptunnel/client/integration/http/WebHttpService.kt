@@ -54,9 +54,13 @@ class WebHttpService @Inject constructor(val clientConfig: ClientConfig){
             }.body(BodyInserters.fromObject(payload.body.orEmpty()))
                     .exchange()
                     .flatMap {response ->
-                        response.bodyToMono(String::class.java).map {
-                            Payload(headers = response.headers().asHttpHeaders(), body = it)
+                        response.bodyToMono(String::class.java).defaultIfEmpty("").map {
+                            Payload(headers = response.headers().asHttpHeaders(), body = it, status = response.rawStatusCode())
                         }
+                    }.doOnError {
+                        log.error("${WebHttpService::getResponseFromLocalServer}, Error=${it.message}", it)
+                    }.doOnNext {
+                        log.info("${WebHttpService::getResponseFromLocalServer}, Response=$it")
                     }
         } ?: Mono.error<Payload>(BadServerRequestException(Gossip(message = "Invalid HTTP Method")))
     }

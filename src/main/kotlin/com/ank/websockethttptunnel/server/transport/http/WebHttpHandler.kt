@@ -31,7 +31,7 @@ class WebHttpHandler @Inject constructor(val webHttpSocketDelegator: WebHttpSock
                                         body = bodyAsText)
                                 webHttpSocketDelegator.getResponse(payload).flatMap { responsePayload ->
                                     ServerResponse
-                                            .ok()
+                                            .status(responsePayload.status ?: 200)
                                             .headers { headers ->
                                                 responsePayload.headers?.forEach {
                                                     headers.set(it.key, it.value)

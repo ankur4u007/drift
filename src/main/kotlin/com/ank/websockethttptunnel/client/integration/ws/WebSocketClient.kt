@@ -55,7 +55,7 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
                             Mono.just(it)
                         }
                     }.map {
-                        session.send(session.textMessage(Gossip(event = Event.CLIENT_PING).writeValueAsString()).toMono()).subscribe()
+                        session.send(session.textMessage(Gossip(event = Event.CLIENT_PING).writeValueAsString()).toMono()).onErrorResume { Mono.empty() }.subscribe()
                 it
             }.onErrorResume {
                 Mono.error(ServerNotRespondingException(Gossip(message = "Server did not respond")))

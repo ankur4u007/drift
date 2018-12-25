@@ -30,7 +30,7 @@ class WebHttpSocketDelegator @Inject constructor(val sessionCacheService: Sessio
         session?.send(session.textMessage(Gossip(event = Event.SERVER_REQUEST, payload = payload, requestId = requestId).writeValueAsString())
                 .toMono())?.subscribe()
         return Flux.interval(Duration.ofMillis(200))
-                .flatMap { Mono.justOrEmpty(sessionCacheService.payloads.get(requestId)) }
+                .flatMap { Mono.justOrEmpty(sessionCacheService.getPayload(requestId)) }
                 .take(Duration.ofSeconds(serverConfig.remoteClient?.timeoutInSec ?: TEN_SECONDS))
                 .doOnNext { log.info("${WebHttpSocketDelegator::getResponse.name}, Received response $it") }
                 .filter { it != null }

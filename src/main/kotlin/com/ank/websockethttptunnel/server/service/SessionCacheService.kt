@@ -21,9 +21,9 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
 
     }
 
-    val payloads = ConcurrentHashMap<String, Payload>()
-    val activeClients = ConcurrentHashMap<String, ClientMetadata>()
-    val randomGenerator = Random(Int.MAX_VALUE)
+    private val payloads = ConcurrentHashMap<String, Payload>()
+    private val activeClients = ConcurrentHashMap<String, ClientMetadata>()
+    private val randomGenerator = Random(Int.MAX_VALUE)
 
 
     fun registerClient(clientSession: WebSocketSession) {
@@ -40,6 +40,10 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
         payloads.putIfAbsent(gossip.requestId.orEmpty(), gossip.payload ?: Payload())
     }
 
+    fun getPayload(requestId: String): Payload? {
+        return payloads.get(requestId)
+    }
+
     fun updateClientTimestamp(sessionId: String) {
         val clientMetadata = activeClients.get(sessionId)
         clientMetadata?.let {
@@ -48,7 +52,6 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
     }
 
     fun evictCache() {
-
         activeClients.filter {
             DateTime(it.value.lastActive).plusSeconds((serverConfig.remoteClient?.evictDurationInSec
                             ?: SIXTY_SECONDS).toInt()).isBeforeNow

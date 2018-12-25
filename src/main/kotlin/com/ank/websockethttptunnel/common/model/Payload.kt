@@ -8,5 +8,6 @@ data class Payload (
         val url: String? = null,
         val queryParams: MutableMap<String, MutableList<String>>? = null,
         val headers: MutableMap<String, MutableList<String>>? = null,
-        val body: String? = null
+        val body: String? = null,
+        val status: Int? = null
 )

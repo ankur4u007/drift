@@ -29,7 +29,9 @@ class ClientEventHandlerService @Inject constructor(val clientCacheService: Clie
                 clientCacheService.markForPong()
                 webHttpService.getResponseFromLocalServer(gossip.payload).map { responsePayload ->
                     session.send(session
-                            .textMessage(gossip.copy(payload = responsePayload, event = Event.CLIENT_RESPOND).writeValueAsString()).toMono()).subscribe()
+                            .textMessage(gossip.copy(payload = responsePayload, event = Event.CLIENT_RESPOND).writeValueAsString()).toMono()).doOnError {
+                        log.error("${it.message}", it)
+                    }.subscribe()
                     responsePayload
                 }.then()
             }
