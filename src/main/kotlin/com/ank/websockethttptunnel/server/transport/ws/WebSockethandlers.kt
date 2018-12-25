@@ -1,4 +1,4 @@
-package com.ank.websockethttptunnel.server.transport.ws.handlers
+package com.ank.websockethttptunnel.server.transport.ws
 
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.socket.WebSocketHandler

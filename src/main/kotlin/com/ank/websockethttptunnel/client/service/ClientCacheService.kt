@@ -1,7 +1,7 @@
 package com.ank.websockethttptunnel.client.service
 
 import com.ank.websockethttptunnel.client.config.ClientConfig
-import com.ank.websockethttptunnel.client.config.MAX_PING_MISSES
+import com.ank.websockethttptunnel.common.contants.TEN_SECONDS
 import org.apache.commons.collections4.queue.CircularFifoQueue
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -13,7 +13,7 @@ class ClientCacheService @Inject constructor(clientConfig: ClientConfig) {
         val log = LoggerFactory.getLogger(ClientCacheService::class.java)
     }
 
-    val circularFifoQueue = CircularFifoQueue<Boolean>(clientConfig.remoteServer?.ping?.reconnectAfterMaxMisses ?: MAX_PING_MISSES)
+    val circularFifoQueue = CircularFifoQueue<Boolean>((clientConfig.remoteServer?.ping?.reconnectAfterMaxMisses ?: TEN_SECONDS).toInt())
 
     fun updateAndCheckPingStatus(): Boolean {
         return synchronized(circularFifoQueue) {

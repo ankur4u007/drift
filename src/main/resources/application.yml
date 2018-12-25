@@ -5,6 +5,9 @@ tunnel:
   server:
     enabled: true
     key: "2b625f93-7006-47e2-a469-f41ec3dc7442"
+    remoteClient:
+      evictDurationInSec: 5
+      timeoutInSec: 5
   client:
     enabled: true
     remoteServer:

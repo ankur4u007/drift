@@ -5,6 +5,7 @@ buildscript {
 		javaxInjectVersion = '1'
 		jacksonModuleKotlinVersion = '2.9.+'
 		apacheCommonsCollectionVersion = '4.2'
+		jodaTimeVersion = '2.10.1'
 	}
 	repositories {
 		mavenLocal()
@@ -55,6 +56,7 @@ dependencies {
 	implementation("javax.inject:javax.inject:$javaxInjectVersion")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonModuleKotlinVersion")
 	implementation("org.apache.commons:commons-collections4:$apacheCommonsCollectionVersion")
+	implementation("joda-time:joda-time:$jodaTimeVersion")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	testImplementation("org.springframework.boot:spring-boot-starter-test:$springBootVersion")

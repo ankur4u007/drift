@@ -3,9 +3,8 @@ package com.ank.websockethttptunnel.client.integration.ws
 import com.ank.websockethttptunnel.client.service.ClientCacheService
 import com.ank.websockethttptunnel.client.service.ClientEventHandlerService
 import com.ank.websockethttptunnel.client.config.ClientConfig
-import com.ank.websockethttptunnel.client.config.DELAY_IN_SEC
-import com.ank.websockethttptunnel.client.config.DURATION_IN_SEC
 import com.ank.websockethttptunnel.client.exception.ServerNotRespondingException
+import com.ank.websockethttptunnel.common.contants.TEN_SECONDS
 import com.ank.websockethttptunnel.common.model.Event
 import com.ank.websockethttptunnel.common.model.Gossip
 import com.ank.websockethttptunnel.common.util.parseToType
@@ -17,6 +16,7 @@ import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClien
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.core.publisher.toMono
 import java.net.ConnectException
 import java.net.URI
 import java.time.Duration
@@ -28,7 +28,6 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
                                                  val clientCacheService: ClientCacheService) {
     companion object {
         val log = LoggerFactory.getLogger(WebSocketClientService::class.java)
-        val activeSession: WebSocketSession? = null
     }
 
     fun getWSClient() :  Disposable{
@@ -38,33 +37,35 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
                 .doOnError {
                     log.error(it.message, it)
                 }.retry {
-                    log.info("${WebSocketClientService::getWSClient}, retrying because of ${it.message}")
+                    log.info("${WebSocketClientService::getWSClient.name}, retrying because of ${it.message}")
                     it is ServerNotRespondingException || it is ConnectException
                 }.subscribe()
     }
 
     private fun connectWs(): (WebSocketSession) -> Mono<Void> {
         return { session ->
-            val response = session.receive().flatMap {
+            session.receive().flatMap {
                 it.payloadAsText.parseToType(Gossip::class.java).flatMap {
                     clientEventHandlerService.handle(it)
                 }
-            }.then()
-            val request = session.send(
-                    ping().flatMap {
+            }.subscribe()
+            ping().flatMap {
                         if (clientCacheService.updateAndCheckPingStatus()) {
-                            Flux.error(ServerNotRespondingException(Gossip(message = "Server missed ${clientConfig.remoteServer?.ping?.reconnectAfterMaxMisses} pings")))
+                            Mono.error(ServerNotRespondingException(Gossip(message = "Server missed ${clientConfig.remoteServer?.ping?.reconnectAfterMaxMisses} pings")))
                         } else {
-                            Flux.just(it)
+                            Mono.just(it)
                         }
-                    }.map { session.textMessage(Gossip(event = Event.CLIENT_PING).writeValueAsString()) }
-            )
-            Mono.zip(response, request).then()
+                    }.map {
+                        session.send(session.textMessage(Gossip(event = Event.CLIENT_PING).writeValueAsString()).toMono()).subscribe()
+                it
+            }.onErrorResume {
+                Mono.error(ServerNotRespondingException(Gossip(message = "Server did not respond")))
+            }.then()
         }
     }
 
     fun ping(): Flux<Long> {
-        return Flux.interval(Duration.ofSeconds(clientConfig.remoteServer?.ping?.delayInSec ?: DELAY_IN_SEC),
-                Duration.ofSeconds(clientConfig.remoteServer?.ping?.durationInSec ?: DURATION_IN_SEC))
+        return Flux.interval(Duration.ofSeconds(clientConfig.remoteServer?.ping?.delayInSec ?: TEN_SECONDS),
+                Duration.ofSeconds(clientConfig.remoteServer?.ping?.durationInSec ?: TEN_SECONDS))
     }
 }

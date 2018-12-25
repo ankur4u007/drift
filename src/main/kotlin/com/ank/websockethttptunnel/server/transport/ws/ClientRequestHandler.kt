@@ -1,4 +1,4 @@
-package com.ank.websockethttptunnel.server.transport.ws.handlers
+package com.ank.websockethttptunnel.server.transport.ws
 
 import com.ank.websockethttptunnel.common.model.Gossip
 import com.ank.websockethttptunnel.common.util.parseToType

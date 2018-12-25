@@ -13,14 +13,14 @@ class ClientEventHandlerService @Inject constructor(val clientCacheService: Clie
         val log = LoggerFactory.getLogger(ClientEventHandlerService::class.java)
     }
 
-    fun handle(gossip: Gossip): Mono<Gossip>{
+    fun handle(gossip: Gossip): Mono<Void>{
         log.info("${ClientEventHandlerService::handle.name}, gossip=$gossip")
         return when(gossip.event) {
             Event.SERVER_PONG -> {
                 clientCacheService.markForPong()
-                Mono.just(gossip)
+                Mono.empty()
             }
-            else -> Mono.just(gossip)
+            else -> Mono.empty()
         }
     }
 }

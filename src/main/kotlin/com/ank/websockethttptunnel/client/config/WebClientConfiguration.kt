@@ -8,10 +8,11 @@ import reactor.core.Disposable
 import javax.inject.Inject
 
 @Configuration
+@ConditionalOnProperty(name = ["tunnel.client.enabled"], havingValue = "true")
 class WebClientConfiguration @Inject constructor(val webSocketClientService: WebSocketClientService) {
 
     @Bean
-    @ConditionalOnProperty(name = ["tunnel.client.enabled"], havingValue = "true")
+
     fun wsClient(): Disposable {
        return webSocketClientService.getWSClient()
     }

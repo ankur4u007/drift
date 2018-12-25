@@ -1,11 +1,8 @@
 package com.ank.websockethttptunnel.client.config
 
+import com.ank.websockethttptunnel.common.contants.TEN_SECONDS
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
-
-const val DURATION_IN_SEC: Long = 10
-const val DELAY_IN_SEC: Long = 10
-const val MAX_PING_MISSES: Int = 10
 
 @Configuration
 @ConfigurationProperties(prefix = "tunnel.client")
@@ -22,7 +19,7 @@ data class RemoteServer (
 )
 
 data class PingServer (
-        var durationInSec: Long? = DURATION_IN_SEC,
-        var delayInSec: Long? = DELAY_IN_SEC,
-        var reconnectAfterMaxMisses: Int? = MAX_PING_MISSES
+        var durationInSec: Long? = TEN_SECONDS,
+        var delayInSec: Long? = TEN_SECONDS,
+        var reconnectAfterMaxMisses: Long? = TEN_SECONDS
 )
