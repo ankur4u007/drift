@@ -36,7 +36,7 @@ class WebHttpHandler @Inject constructor(val webHttpSocketDelegator: WebHttpSock
                                             }.body(BodyInserters.fromObject(responsePayload.body.orEmpty()))
                                 }
                     }.doOnError {
-                        log.error("${WebHttpHandler::handle.name}, Exception=${it.message}", it)
+                        log.error("${WebHttpHandler::handle.name}, Error=${it.message}", it)
                     }
             }
         }.filter { request, next ->

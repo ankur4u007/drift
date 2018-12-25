@@ -58,9 +58,9 @@ class WebHttpService @Inject constructor(val clientConfig: ClientConfig){
                             Payload(headers = response.headers().asHttpHeaders(), body = it, status = response.rawStatusCode())
                         }
                     }.doOnError {
-                        log.error("${WebHttpService::getResponseFromLocalServer}, Error=${it.message}", it)
+                        log.error("${WebHttpService::getResponseFromLocalServer.name}, Error=${it.message}", it)
                     }.doOnNext {
-                        log.info("${WebHttpService::getResponseFromLocalServer}, Response=$it")
+                        log.info("${WebHttpService::getResponseFromLocalServer.name}, Response=$it")
                     }
         } ?: Mono.error<Payload>(BadServerRequestException(Gossip(message = "Invalid HTTP Method")))
     }
