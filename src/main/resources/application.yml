@@ -13,6 +13,7 @@ tunnel:
       ping:
         durationInSec: 1
         delayInSec: 1
+        reconnectAfterMaxMisses: 10
     localServer:
       url: http://localhost:9000
 

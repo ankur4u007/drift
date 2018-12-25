@@ -17,7 +17,7 @@ class ClientEventHandlerService @Inject constructor(val clientCacheService: Clie
         log.info("${ClientEventHandlerService::handle.name}, gossip=$gossip")
         return when(gossip.event) {
             Event.SERVER_PONG -> {
-                clientCacheService.decrementPong()
+                clientCacheService.markForPong()
                 Mono.just(gossip)
             }
             else -> Mono.just(gossip)

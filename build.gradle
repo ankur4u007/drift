@@ -4,6 +4,7 @@ buildscript {
 		springBootVersion = '2.1.1.RELEASE'
 		javaxInjectVersion = '1'
 		jacksonModuleKotlinVersion = '2.9.+'
+		apacheCommonsCollectionVersion = '4.2'
 	}
 	repositories {
 		mavenLocal()
@@ -53,6 +54,7 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-webflux:$springBootVersion")
 	implementation("javax.inject:javax.inject:$javaxInjectVersion")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonModuleKotlinVersion")
+	implementation("org.apache.commons:commons-collections4:$apacheCommonsCollectionVersion")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	testImplementation("org.springframework.boot:spring-boot-starter-test:$springBootVersion")

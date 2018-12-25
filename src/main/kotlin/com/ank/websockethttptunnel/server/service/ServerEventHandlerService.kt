@@ -10,13 +10,13 @@ import reactor.core.publisher.Mono
 import javax.inject.Inject
 
 @Service
-class EventHandlerService @Inject constructor(val sessionCacheService: SessionCacheService) {
+class ServerEventHandlerService @Inject constructor(val sessionCacheService: SessionCacheService) {
 
     companion object {
-        val log = LoggerFactory.getLogger(EventHandlerService::class.java)
+        val log = LoggerFactory.getLogger(ServerEventHandlerService::class.java)
     }
     fun handle(gossip: Gossip, sessionId: String): Mono<Gossip> {
-        log.info("${EventHandlerService::handle.name}, gossip=$gossip, sessionId=$sessionId")
+        log.info("${ServerEventHandlerService::handle.name}, gossip=$gossip, sessionId=$sessionId")
         return when(gossip.event) {
             Event.CLIENT_PING -> {
                 sessionCacheService.updateClientTimestamp(sessionId)

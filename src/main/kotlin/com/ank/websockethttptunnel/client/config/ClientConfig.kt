@@ -24,5 +24,5 @@ data class RemoteServer (
 data class PingServer (
         var durationInSec: Long? = DURATION_IN_SEC,
         var delayInSec: Long? = DELAY_IN_SEC,
-        var maxMisses: Int? = MAX_PING_MISSES
+        var reconnectAfterMaxMisses: Int? = MAX_PING_MISSES
 )

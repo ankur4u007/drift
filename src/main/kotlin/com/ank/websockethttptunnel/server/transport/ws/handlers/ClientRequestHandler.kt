@@ -5,7 +5,7 @@ import com.ank.websockethttptunnel.common.util.parseToType
 import com.ank.websockethttptunnel.common.util.writeValueAsString
 import com.ank.websockethttptunnel.client.exception.BaseException
 import com.ank.websockethttptunnel.server.service.AuthService
-import com.ank.websockethttptunnel.server.service.EventHandlerService
+import com.ank.websockethttptunnel.server.service.ServerEventHandlerService
 import com.ank.websockethttptunnel.server.service.SessionCacheService
 import com.fasterxml.jackson.core.JsonParseException
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -20,7 +20,7 @@ import javax.inject.Inject
 
 @Service
 class ClientRequestHandler @Inject constructor (val authService: AuthService,
-                                                val eventHandlerService: EventHandlerService,
+                                                val eventHandlerService: ServerEventHandlerService,
                                                 val sessionCacheService: SessionCacheService) : WebSocketHandler {
     companion object {
         var log  = LoggerFactory.getLogger(ClientRequestHandler::class.java)

@@ -5,8 +5,7 @@ import com.ank.websockethttptunnel.client.service.ClientEventHandlerService
 import com.ank.websockethttptunnel.client.config.ClientConfig
 import com.ank.websockethttptunnel.client.config.DELAY_IN_SEC
 import com.ank.websockethttptunnel.client.config.DURATION_IN_SEC
-import com.ank.websockethttptunnel.client.config.MAX_PING_MISSES
-import com.ank.websockethttptunnel.client.exception.ClientNotRespondingException
+import com.ank.websockethttptunnel.client.exception.ServerNotRespondingException
 import com.ank.websockethttptunnel.common.model.Event
 import com.ank.websockethttptunnel.common.model.Gossip
 import com.ank.websockethttptunnel.common.util.parseToType
@@ -38,7 +37,10 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
         return ReactorNettyWebSocketClient().execute(fullUrl, connectWs())
                 .doOnError {
                     log.error(it.message, it)
-                }.retry { it is ClientNotRespondingException || it is ConnectException }.subscribe()
+                }.retry {
+                    log.info("${WebSocketClientService::getWSClient}, retrying because of ${it.message}")
+                    it is ServerNotRespondingException || it is ConnectException
+                }.subscribe()
     }
 
     private fun connectWs(): (WebSocketSession) -> Mono<Void> {
@@ -49,16 +51,13 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
                 }
             }.then()
             val request = session.send(
-                    ping().map {
-                        Gossip(event = Event.CLIENT_PING)
-                    }.flatMap {
-                        val incrementPing = clientCacheService.incrementPing()
-                        if (incrementPing > clientConfig.remoteServer?.ping?.maxMisses ?: MAX_PING_MISSES) {
-                            Flux.error(ClientNotRespondingException(it))
+                    ping().flatMap {
+                        if (clientCacheService.updateAndCheckPingStatus()) {
+                            Flux.error(ServerNotRespondingException(Gossip(message = "Server missed ${clientConfig.remoteServer?.ping?.reconnectAfterMaxMisses} pings")))
                         } else {
                             Flux.just(it)
                         }
-                    }.map { session.textMessage(it.writeValueAsString()) }
+                    }.map { session.textMessage(Gossip(event = Event.CLIENT_PING).writeValueAsString()) }
             )
             Mono.zip(response, request).then()
         }
