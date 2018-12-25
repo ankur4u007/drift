@@ -31,7 +31,6 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
     }
 
     fun getWSClient() :  Disposable{
-        val url = if (clientConfig.remoteServer?.url?.endsWith("/") == true) clientConfig.remoteServer?.url else clientConfig.remoteServer?.url.plus("/")
         val fullUrl = URI.create(clientConfig.remoteServer?.url).resolve("/websocket?key=${clientConfig.remoteServer?.key}")
         return ReactorNettyWebSocketClient().execute(fullUrl, connectWs())
                 .doOnError {
@@ -46,7 +45,7 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
         return { session ->
             session.receive().flatMap {
                 it.payloadAsText.parseToType(Gossip::class.java).flatMap {
-                    clientEventHandlerService.handle(it)
+                    clientEventHandlerService.handle(session, it)
                 }
             }.subscribe()
             ping().flatMap {

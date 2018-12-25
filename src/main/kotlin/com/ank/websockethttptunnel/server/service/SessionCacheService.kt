@@ -58,8 +58,12 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
     }
 
     fun getClient() : ClientMetadata? {
-        return activeClients.values.elementAtOrElse(randomGenerator.nextInt(activeClients.size), {
-            activeClients.values.firstOrNull()
-        })
+        return if (activeClients.isNotEmpty()) {
+            return activeClients.values.elementAtOrElse(randomGenerator.nextInt(activeClients.size), {
+                activeClients.values.firstOrNull()
+            })
+        } else {
+            null
+        }
     }
 }

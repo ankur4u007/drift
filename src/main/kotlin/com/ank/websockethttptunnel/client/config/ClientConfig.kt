@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration
 data class ClientConfig (
         var key: String? = null,
         var remoteServer: RemoteServer? = null,
-        var localServer: String? = null
+        var localServer: LocalServer? = null
 )
 
 data class RemoteServer (
@@ -22,4 +22,10 @@ data class PingServer (
         var durationInSec: Long? = TEN_SECONDS,
         var delayInSec: Long? = TEN_SECONDS,
         var reconnectAfterMaxMisses: Long? = TEN_SECONDS
+)
+
+data class LocalServer (
+        var url: String? = null,
+        var connectTimeoutInSec: Long? = TEN_SECONDS,
+        var readTimeoutInSec: Long? = TEN_SECONDS
 )

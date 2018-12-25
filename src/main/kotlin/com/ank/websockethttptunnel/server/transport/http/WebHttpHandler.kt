@@ -3,7 +3,6 @@ package com.ank.websockethttptunnel.server.transport.http
 import com.ank.websockethttptunnel.common.model.Payload
 import com.ank.websockethttptunnel.common.util.writeValueAsString
 import com.ank.websockethttptunnel.server.service.WebHttpSocketDelegator
-import io.netty.handler.codec.http.HttpMethod
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.BodyInserters
@@ -25,13 +24,19 @@ class WebHttpHandler @Inject constructor(val webHttpSocketDelegator: WebHttpSock
                     log.info("${WebHttpHandler::handle.name}, 2 received request for ${this.writeValueAsString()}")
                     request.bodyToMono(String::class.java).defaultIfEmpty("").flatMap { bodyAsText ->
                                 log.info("${WebHttpHandler::handle.name}, 3 received request for ${request.path()}")
-                                val payload = Payload(method = HttpMethod.valueOf(request.methodName()),
+                                val payload = Payload(method = request.method(),
                                         url = request.path(),
-                                        queryParams = request.queryParams().toSingleValueMap(),
+                                        queryParams = request.queryParams().toMutableMap(),
                                         headers = request.headers().asHttpHeaders().toMutableMap(),
                                         body = bodyAsText)
-                                webHttpSocketDelegator.getResponse(payload).flatMap {
-                                    ServerResponse.ok().body(BodyInserters.fromObject(it.body.orEmpty()))
+                                webHttpSocketDelegator.getResponse(payload).flatMap { responsePayload ->
+                                    ServerResponse
+                                            .ok()
+                                            .headers { headers ->
+                                                responsePayload.headers?.forEach {
+                                                    headers.set(it.key, it.value)
+                                                }
+                                            }.body(BodyInserters.fromObject(responsePayload.body.orEmpty()))
                                 }
                     }.doOnError {
                         log.error("${WebHttpHandler::handle.name}, Exception=${it.message}", it)
