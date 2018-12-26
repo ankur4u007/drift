@@ -31,9 +31,9 @@ class ClientEventHandlerService @Inject constructor(val clientCacheService: Clie
                     session.send(session
                             .textMessage(gossip.copy(payload = responsePayload, event = Event.CLIENT_RESPOND).writeValueAsString()).toMono()).doOnError {
                         log.error("${ClientEventHandlerService::handle.name}, Error=${it.message}", it)
-                    }.subscribe()
-                    responsePayload
-                }.then()
+                    }
+                }.then().subscribe()
+                Mono.empty()
             }
             else -> Mono.empty()
         }
