@@ -26,15 +26,16 @@ class WebHttpSocketDelegator @Inject constructor(val sessionCacheService: Sessio
 
     fun getResponse(payload: Payload): Mono<Payload> {
         val requestId = UUID.randomUUID().toString()
-        val session = sessionCacheService.getClient()?.session
-        session?.send(session.textMessage(Gossip(event = Event.SERVER_REQUEST, payload = payload, requestId = requestId).writeValueAsString())
-                .toMono())?.subscribe()
-        return Flux.interval(Duration.ofMillis(200))
-                .flatMap { Mono.justOrEmpty(sessionCacheService.getPayload(requestId)) }
-                .take(Duration.ofSeconds(serverConfig.remoteClient?.timeoutInSec ?: TEN_SECONDS))
-                .doOnNext { log.info("${WebHttpSocketDelegator::getResponse.name}, Received response $it") }
-                .filter { it != null }
-                .switchIfEmpty(Mono.error(ClientUnavailableException()))
-                .toMono()
+        return sessionCacheService.getClient()?.session?.let {
+            it.send(it.textMessage(Gossip(event = Event.SERVER_REQUEST, payload = payload, requestId = requestId).writeValueAsString())
+                    .toMono()).subscribe()
+            return Flux.interval(Duration.ofMillis(200))
+                    .flatMap { Mono.justOrEmpty(sessionCacheService.getPayload(requestId)) }
+                    .take(Duration.ofSeconds(serverConfig.remoteClient?.timeoutInSec ?: TEN_SECONDS))
+                    .doOnNext { log.info("${WebHttpSocketDelegator::getResponse.name}, Received response $it") }
+                    .filter { it != null }
+                    .switchIfEmpty(Mono.error(ClientUnavailableException()))
+                    .toMono()
+        } ?: Mono.error(ClientUnavailableException())
     }
 }
