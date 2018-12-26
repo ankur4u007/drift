@@ -18,7 +18,7 @@ tunnel:
         delayInSec: 1
         reconnectAfterMaxMisses: 10
     localServer:
-      url: http://localhost:80
+      url: http://localhost:9000
       connectTimeoutInSec: 2
       readTimeoutInSec: 2
 

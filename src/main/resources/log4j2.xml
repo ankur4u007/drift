@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info" monitorInterval="30" strict="true">
+    <Appenders>
+        <Console name="ConsoleAppender" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${hostName} --- [%15.15t] %-40.40c{1.} : %m%n%ex"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <AsyncLogger name="com.ank.websockethttptunnel" level="INFO" additivity="false">
+            <AppenderRef ref="ConsoleAppender"/>
+        </AsyncLogger>
+        <AsyncRoot level="INFO" additivity="false">
+            <AppenderRef ref="ConsoleAppender" />
+        </AsyncRoot>
+    </Loggers>
+</Configuration>

@@ -6,6 +6,7 @@ buildscript {
 		jacksonModuleKotlinVersion = '2.9.+'
 		apacheCommonsCollectionVersion = '4.2'
 		jodaTimeVersion = '2.10.1'
+		lmaxVersion = '3.4.2'
 	}
 	repositories {
 		mavenLocal()
@@ -27,9 +28,9 @@ apply plugin: 'io.spring.dependency-management'
 apply plugin: 'application'
 
 group = 'com.ank'
-version = '0.0.1-SNAPSHOT'
 sourceCompatibility = 1.8
 mainClassName = 'com.ank.websockethttptunnel.ApplicationKt'
+
 compileKotlin {
 	kotlinOptions {
 		freeCompilerArgs = ["-Xjsr305=strict"]
@@ -53,6 +54,8 @@ repositories {
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-websocket:$springBootVersion")
 	implementation("org.springframework.boot:spring-boot-starter-webflux:$springBootVersion")
+	implementation("org.springframework.boot:spring-boot-starter-log4j2:$springBootVersion")
+	implementation("com.lmax:disruptor:$lmaxVersion")
 	implementation("javax.inject:javax.inject:$javaxInjectVersion")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonModuleKotlinVersion")
 	implementation("org.apache.commons:commons-collections4:$apacheCommonsCollectionVersion")
@@ -65,4 +68,7 @@ dependencies {
 configurations {
 	implementation.exclude module: 'spring-boot-starter-tomcat'
 	implementation.exclude module: 'spring-webmvc'
+	implementation.exclude module: 'spring-boot-starter-logging'
 }
+
+jar.enabled = false
