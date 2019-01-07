@@ -4,11 +4,12 @@ import com.ank.websockethttptunnel.common.contants.TEN_SECONDS
 import com.ank.websockethttptunnel.common.model.Event
 import com.ank.websockethttptunnel.common.model.Gossip
 import com.ank.websockethttptunnel.common.model.Payload
-import com.ank.websockethttptunnel.common.util.writeValueAsString
+import com.ank.websockethttptunnel.common.util.orEmpty
 import com.ank.websockethttptunnel.server.config.ServerConfig
 import com.ank.websockethttptunnel.server.exception.ClientUnavailableException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.util.SerializationUtils
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
@@ -27,8 +28,9 @@ class WebHttpSocketDelegator @Inject constructor(val sessionCacheService: Sessio
     fun getResponse(payload: Payload): Mono<Payload> {
         val requestId = UUID.randomUUID().toString()
         return sessionCacheService.getClient()?.session?.let {
-            it.send(it.textMessage(Gossip(event = Event.SERVER_REQUEST, payload = payload, requestId = requestId).writeValueAsString())
-                    .toMono()).subscribe()
+            it.send(it.binaryMessage {
+                it.wrap(SerializationUtils.serialize(Gossip(event = Event.SERVER_REQUEST, payload = payload, requestId = requestId)).orEmpty())
+            }.toMono()).subscribe()
             return Flux.interval(Duration.ofMillis(200))
                     .flatMap { Mono.justOrEmpty(sessionCacheService.getPayload(requestId)) }
                     .take(Duration.ofSeconds(serverConfig.remoteClient?.timeoutInSec ?: TEN_SECONDS))

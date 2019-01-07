@@ -1,5 +1,6 @@
 package com.ank.websockethttptunnel.common.util
 
+import org.springframework.core.io.ByteArrayResource
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 
@@ -11,4 +12,8 @@ fun MutableMap<String, MutableList<String>>?.toMultiValueMap(): MultiValueMap<St
         }
     }
     return linkedMultiValueMap
+}
+
+fun ByteArray?.orEmpty() : ByteArray {
+    return this ?: "".toByteArray()
 }

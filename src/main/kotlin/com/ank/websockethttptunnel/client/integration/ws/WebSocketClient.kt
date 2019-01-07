@@ -7,12 +7,14 @@ import com.ank.websockethttptunnel.client.exception.ServerNotRespondingException
 import com.ank.websockethttptunnel.common.contants.TEN_SECONDS
 import com.ank.websockethttptunnel.common.model.Event
 import com.ank.websockethttptunnel.common.model.Gossip
-import com.ank.websockethttptunnel.common.util.parseToType
-import com.ank.websockethttptunnel.common.util.writeValueAsString
+import com.ank.websockethttptunnel.common.util.orEmpty
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.util.SerializationUtils
+import org.springframework.util.StreamUtils
 import org.springframework.web.reactive.socket.WebSocketSession
 import org.springframework.web.reactive.socket.client.ReactorNettyWebSocketClient
+import org.springframework.web.reactive.socket.server.upgrade.ReactorNettyRequestUpgradeStrategy
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -32,6 +34,9 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
 
     fun getWSClient() :  Disposable{
         val fullUrl = URI.create(clientConfig.remoteServer?.url).resolve("/websocket?key=${clientConfig.remoteServer?.key}")
+        val reactorNettyRequestUpgradeStrategy = ReactorNettyRequestUpgradeStrategy()
+        reactorNettyRequestUpgradeStrategy.maxFramePayloadLength = 1000000000
+
         return ReactorNettyWebSocketClient().execute(fullUrl, connectWs())
                 .doOnError {
                     log.error(it.message, it)
@@ -44,8 +49,9 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
     private fun connectWs(): (WebSocketSession) -> Mono<Void> {
         return { session ->
             session.receive().flatMap {
-                it.payloadAsText.parseToType(Gossip::class.java).flatMap {
-                    clientEventHandlerService.handle(session, it)
+                val gossip = SerializationUtils.deserialize(StreamUtils.copyToByteArray(it.payload.asInputStream())) as Gossip
+                gossip.toMono().map {
+                    clientEventHandlerService.handle(session, gossip)
                 }
             }.subscribe()
             ping().flatMap {
@@ -55,7 +61,9 @@ class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
                             Mono.just(it)
                         }
                     }.map {
-                        session.send(session.textMessage(Gossip(event = Event.CLIENT_PING).writeValueAsString()).toMono()).onErrorResume { Mono.empty() }.subscribe()
+                        session.send(session.binaryMessage {
+                            it.wrap(SerializationUtils.serialize(Gossip(event = Event.CLIENT_PING)).orEmpty())
+                        }.toMono()).onErrorResume { Mono.empty() }.subscribe()
                 it
             }.onErrorResume {
                 Mono.error(ServerNotRespondingException(Gossip(message = "Server did not respond")))

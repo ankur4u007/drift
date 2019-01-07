@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import reactor.core.publisher.Mono
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.TimeZone
 
@@ -21,16 +19,4 @@ object JsonConverter {
                 .setTimeZone(TimeZone.getTimeZone("UTC"))
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
-}
-
-fun <T> String.parseToType(classType: Class<T>) : Mono<T> {
-    return try {
-        Mono.just(JsonConverter.objectMapper.readValue(this, classType))
-    } catch (exception: Exception) {
-        Mono.error(exception)
-    }
-}
-
-fun <T>T.writeValueAsString() : String {
-    return JsonConverter.objectMapper.writeValueAsString(this)
 }

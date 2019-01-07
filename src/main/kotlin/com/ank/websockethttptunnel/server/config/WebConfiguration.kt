@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.DependsOn
 import org.springframework.http.codec.ServerCodecConfigurer
 import org.springframework.http.codec.json.Jackson2JsonDecoder
 import org.springframework.http.codec.json.Jackson2JsonEncoder
@@ -18,10 +17,11 @@ import org.springframework.web.reactive.HandlerMapping
 import org.springframework.web.reactive.config.EnableWebFlux
 import org.springframework.web.reactive.config.WebFluxConfigurer
 import org.springframework.web.reactive.function.server.RouterFunction
-import org.springframework.web.reactive.function.server.RouterFunctions
 import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
+import org.springframework.web.reactive.socket.server.support.HandshakeWebSocketService
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter
+import org.springframework.web.reactive.socket.server.upgrade.ReactorNettyRequestUpgradeStrategy
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import java.time.Duration
@@ -45,7 +45,9 @@ class WebConfiguration @Inject constructor(val webSocketHandler: WebSockethandle
 
     @Bean
     fun handlerAdapter(): WebSocketHandlerAdapter {
-        return WebSocketHandlerAdapter()
+        val requestUpgradeStrategy = ReactorNettyRequestUpgradeStrategy()
+        requestUpgradeStrategy.maxFramePayloadLength = 1024*1024
+        return WebSocketHandlerAdapter(HandshakeWebSocketService(requestUpgradeStrategy))
     }
 
     @Bean

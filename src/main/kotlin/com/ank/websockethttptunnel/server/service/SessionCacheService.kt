@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.socket.WebSocketSession
 import java.util.Date
+import java.util.Random
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
-import kotlin.random.Random
 
 @Service
 class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
@@ -23,8 +23,6 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
 
     private val payloads = ConcurrentHashMap<String, Payload>()
     private val activeClients = ConcurrentHashMap<String, ClientMetadata>()
-    private val randomGenerator = Random(Int.MAX_VALUE)
-
 
     fun registerClient(clientSession: WebSocketSession) {
         activeClients.putIfAbsent(clientSession.id, ClientMetadata(id = clientSession.id, session = clientSession, lastActive = Date()))
@@ -62,9 +60,9 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
 
     fun getClient() : ClientMetadata? {
         return if (activeClients.isNotEmpty()) {
-            return activeClients.values.elementAtOrElse(randomGenerator.nextInt(activeClients.size), {
-                activeClients.values.firstOrNull()
-            })
+            return activeClients.values.sortedByDescending {
+                DateTime(it.lastActive)
+            }.firstOrNull()
         } else {
             null
         }

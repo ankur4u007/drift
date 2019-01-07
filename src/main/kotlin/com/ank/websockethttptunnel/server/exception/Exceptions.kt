@@ -10,4 +10,4 @@ class ForbiddenException(override val gossip: Gossip) : BaseException (gossip)
 class BadRequestException(override val gossip: Gossip) : BaseException (gossip)
 
 @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-class ClientUnavailableException(val msg: String = "Client Timedout, Try again after sometime") : RuntimeException(msg)
+class ClientUnavailableException(val msg: String = "Client unavailable currently.Try again after sometime") : RuntimeException(msg)

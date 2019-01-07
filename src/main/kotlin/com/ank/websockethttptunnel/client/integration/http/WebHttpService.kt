@@ -10,15 +10,20 @@ import io.netty.channel.ChannelOption
 import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
 import org.slf4j.LoggerFactory
+import org.springframework.http.MediaType
+import org.springframework.http.ReactiveHttpOutputMessage
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.BodyInserters
-import org.springframework.web.reactive.function.client.ExchangeStrategies
+import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.support.ClientResponseWrapper
 import reactor.core.publisher.Mono
 import reactor.netty.http.client.HttpClient
 import reactor.netty.tcp.TcpClient
+import java.lang.Exception
 import java.time.Duration
+import java.util.Optional
 import javax.inject.Inject
 
 @Service
@@ -36,7 +41,12 @@ class WebHttpService @Inject constructor(val clientConfig: ClientConfig){
                 }
         WebClient.builder()
                 .baseUrl(clientConfig.localServer?.url ?: "localhost")
-                .exchangeStrategies(ExchangeStrategies.withDefaults())
+                .filter { request, next ->
+                    next.exchange(request).map {
+                        HttpClientResponseWrapper(it)
+                        DefaultClientRequestBuilder(it)
+                    }
+                }
                 .clientConnector(ReactorClientHttpConnector(HttpClient.from(tcpClient)))
                 .build()
     }
@@ -49,13 +59,15 @@ class WebHttpService @Inject constructor(val clientConfig: ClientConfig){
                         .build()
             }.headers { headers ->
                 payload.headers?.forEach { header ->
-                    headers.set(header.key, header.value)
+                    if(header.key.equals("host", true).not()) {
+                        headers.set(header.key, header.value)
+                    }
                 }
-            }.body(BodyInserters.fromObject(payload.body.orEmpty()))
+            }.body(BodyInserters.fromObject(payload.body))
                     .exchange()
                     .flatMap {response ->
-                        response.bodyToMono(String::class.java).defaultIfEmpty("").map {
-                            Payload(headers = response.headers().asHttpHeaders(), body = it, status = response.rawStatusCode())
+                        response.bodyToMono(ByteArray::class.java).defaultIfEmpty("".toByteArray()).map {
+                            Payload(headers = response.headers().asHttpHeaders().toMultiValueMap(), body = it, status = response.rawStatusCode())
                         }
                     }.doOnError {
                         log.error("${WebHttpService::getResponseFromLocalServer.name}, Error=${it.message}", it)
@@ -64,4 +76,22 @@ class WebHttpService @Inject constructor(val clientConfig: ClientConfig){
                     }
         } ?: Mono.error<Payload>(BadServerRequestException(Gossip(message = "Invalid HTTP Method")))
     }
+}
+
+class HttpHeadersWrapper(headers: ClientResponse.Headers) : ClientResponseWrapper.HeadersWrapper(headers) {
+    override fun contentType(): Optional<MediaType> {
+        return try {
+            super.contentType()
+        } catch (ex: Exception) {
+            Optional.empty()
+        }
+    }
+}
+
+class HttpClientResponseWrapper(val delegate: ClientResponse) : ClientResponseWrapper(delegate) {
+    override fun headers(): ClientResponse.Headers {
+        return HttpHeadersWrapper(delegate.headers())
+        ReactiveHttpOutputMessage
+    }
+
 }
