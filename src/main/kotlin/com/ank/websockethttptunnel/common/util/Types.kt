@@ -8,6 +8,7 @@ import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.Disposable
 import reactor.core.publisher.toMono
 import reactor.core.scheduler.Scheduler
+import reactor.core.scheduler.Schedulers
 
 fun MutableMap<String, MutableList<String>>?.toMultiValueMap(): MultiValueMap<String, String> {
     val linkedMultiValueMap = LinkedMultiValueMap<String, String>()
@@ -27,7 +28,7 @@ fun <T> WebSocketSession.sendAsyncBinaryData(data: T, scheduler: Scheduler, log:
     return this.send(this.binaryMessage {
         log.info("op=$methodName, Sending=$data")
         it.wrap(SerializationUtils.serialize(data).orEmpty())
-    }.toMono()).subscribeOn(scheduler).doOnError {
+    }.toMono()).subscribeOn(Schedulers.newElastic("elastic-scheduler")).doOnError {
         log.error("op=$methodName, ${it.message}", it)
     }.subscribe()
 }
