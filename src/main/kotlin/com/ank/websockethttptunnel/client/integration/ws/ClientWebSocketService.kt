@@ -8,6 +8,7 @@ import com.ank.websockethttptunnel.common.contants.TEN_SECONDS
 import com.ank.websockethttptunnel.common.model.Event
 import com.ank.websockethttptunnel.common.model.Gossip
 import com.ank.websockethttptunnel.common.util.sendAsyncBinaryData
+import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.SerializationUtils
@@ -48,7 +49,7 @@ class ClientWebSocketService @Inject constructor(
                     log.error(it.message, it)
                 }.retry {
                     log.info("${ClientWebSocketService::getWebSocketClient.name}, retrying because of ${it.message}")
-                    it is ServerNotRespondingException || it is ConnectException
+                    it is ServerNotRespondingException || it is ConnectException || it is WebSocketHandshakeException
                 }.subscribeOn(clientRegistrationElasticScheduler)
                 .subscribe()
     }
