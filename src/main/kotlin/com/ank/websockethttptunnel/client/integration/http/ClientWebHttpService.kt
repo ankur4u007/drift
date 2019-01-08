@@ -32,8 +32,10 @@ import java.util.Optional
 import javax.inject.Inject
 
 @Service
-class WebHttpService @Inject constructor(val clientConfig: ClientConfig,
-                                         val clientRequestElasticScheduler: Scheduler) {
+class WebHttpService @Inject constructor(
+    val clientConfig: ClientConfig,
+    val clientRequestElasticScheduler: Scheduler
+) {
     companion object {
         val log = LoggerFactory.getLogger(WebHttpService::class.java)
     }
@@ -66,7 +68,7 @@ class WebHttpService @Inject constructor(val clientConfig: ClientConfig,
             }.body(BodyInserters.fromObject(payload.body))
                     .exchange().subscribeOn(clientRequestElasticScheduler)
                     .flatMap { response ->
-                        response.body { inputMessage, context ->
+                        response.body { inputMessage, _ ->
                             inputMessage.body.reduce(object : InputStream() {
                                 override fun read() = -1
                             }) { s: InputStream, d -> SequenceInputStream(s, d.asInputStream())

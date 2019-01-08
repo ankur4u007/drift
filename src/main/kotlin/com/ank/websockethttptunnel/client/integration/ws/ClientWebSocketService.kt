@@ -71,7 +71,6 @@ class ClientWebSocketService @Inject constructor(
             }.onErrorResume {
                 Mono.error(ServerNotRespondingException(Gossip(message = it.message)))
             }.then()
-            ping
             Flux.merge(request, ping).toMono()
         }
     }

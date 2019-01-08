@@ -33,6 +33,7 @@ class ClientEventHandlerService @Inject constructor(
                             clientRequestElasticScheduler, log, this::handleWebSocketRequest.name)
                 }.subscribeOn(clientRequestElasticScheduler).subscribe()
             }
+            else -> {}
         }
     }
 }

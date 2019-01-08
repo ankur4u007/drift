@@ -1,7 +1,6 @@
 package com.ank.websockethttptunnel.client.config
 
 import com.ank.websockethttptunnel.client.integration.ws.ClientWebSocketService
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import reactor.core.Disposable
