@@ -8,7 +8,6 @@ import reactor.core.Disposable
 import javax.inject.Inject
 
 @Configuration
-@ConditionalOnProperty(name = ["tunnel.client.enabled"], havingValue = "true")
 class ClientWebSocketConfiguration @Inject constructor(val clientWebSocketService: ClientWebSocketService) {
 
     @Bean

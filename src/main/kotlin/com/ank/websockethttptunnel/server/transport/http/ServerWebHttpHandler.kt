@@ -23,6 +23,7 @@ class ServerWebHttpHandler @Inject constructor(val serverWebSocketRequestDelegat
                                                val requestElasticScheduler: Scheduler) {
     companion object {
         val log = LoggerFactory.getLogger(ServerWebHttpHandler::class.java)
+        val bufferFactory = DefaultDataBufferFactory()
     }
 
     fun handle(): RouterFunction<ServerResponse> {
@@ -37,7 +38,6 @@ class ServerWebHttpHandler @Inject constructor(val serverWebSocketRequestDelegat
                                         queryParams = request.queryParams().toMultiValueMap(),
                                         headers = request.headers().asHttpHeaders().toMultiValueMap(),
                                         body = body)
-                        val bufferFactory = DefaultDataBufferFactory()
                         serverWebSocketRequestDelegator.getResponse(payload).flatMap { responsePayload ->
                                     ServerResponse
                                             .status(responsePayload.status ?: 200)

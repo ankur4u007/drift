@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.DeserializationFeature
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.codec.ServerCodecConfigurer
 import org.springframework.http.codec.json.Jackson2JsonDecoder
@@ -22,6 +23,7 @@ import javax.inject.Inject
 
 @Configuration
 @EnableWebFlux
+@ComponentScan(" com.ank.websockethttptunnel.server")
 @ConditionalOnProperty(name = ["tunnel.server.enabled"], havingValue = "true")
 class ServerWebConfiguration @Inject constructor(
     val serverConfig: ServerConfig,

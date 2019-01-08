@@ -2,11 +2,13 @@ package com.ank.websockethttptunnel.client.config
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import reactor.core.scheduler.Scheduler
 import reactor.core.scheduler.Schedulers
 
 @Configuration
+@ComponentScan("com.ank.websockethttptunnel.client")
 @ConditionalOnProperty(name = ["tunnel.client.enabled"], havingValue = "true")
 class ClientWebConfiguration {
 
