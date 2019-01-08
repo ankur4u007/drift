@@ -54,6 +54,7 @@ class ServerWebHttpHandler @Inject constructor(
                     }.doOnError {
                         log.error("${ServerWebHttpHandler::handle.name}, Error=${it.message}", it)
                     }.subscribeOn(Schedulers.newElastic("elastic-server-http-handler"))
+                            .publishOn(Schedulers.newElastic("elastic-server-http-handler-publisher"))
             }
         }.filter { request, next ->
             next.handle(request)

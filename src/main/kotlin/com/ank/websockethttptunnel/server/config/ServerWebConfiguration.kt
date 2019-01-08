@@ -37,7 +37,8 @@ class ServerWebConfiguration @Inject constructor(
                     sessionCacheService.evictCache()
                 }.retry {
                     it is Exception
-                }.subscribeOn(registrationElasticScheduler)
+                }.subscribeOn(Schedulers.newElastic("elastic-client-registration-sch"))
+                .publishOn(Schedulers.newElastic("elastic-client-registration-pub"))
                 .subscribe()
     }
 

@@ -68,6 +68,7 @@ class WebHttpService @Inject constructor(
                 }
             }.body(BodyInserters.fromObject(payload.body))
                     .exchange().subscribeOn(Schedulers.newElastic("elastic-local-server-scheduler"))
+                    .publishOn(Schedulers.newElastic("elastic-local-server-pub"))
                     .flatMap { response ->
                         response.body { inputMessage, _ ->
                             inputMessage.body.reduce(object : InputStream() {

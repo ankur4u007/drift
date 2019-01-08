@@ -28,7 +28,8 @@ fun <T> WebSocketSession.sendAsyncBinaryData(data: T, scheduler: Scheduler, log:
     return this.send(this.binaryMessage {
         log.info("op=$methodName, Sending=$data")
         it.wrap(SerializationUtils.serialize(data).orEmpty())
-    }.toMono()).subscribeOn(Schedulers.newElastic("elastic-scheduler")).doOnError {
+    }.toMono()).subscribeOn(Schedulers.newElastic("elastic-scheduler"))
+            .publishOn(Schedulers.newElastic("elastic-publisher")).doOnError {
         log.error("op=$methodName, ${it.message}", it)
     }.subscribe()
 }
