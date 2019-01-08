@@ -21,6 +21,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
 import reactor.core.scheduler.Scheduler
+import reactor.core.scheduler.Schedulers
 import java.net.ConnectException
 import java.net.URI
 import java.time.Duration
@@ -50,7 +51,7 @@ class ClientWebSocketService @Inject constructor(
                 }.retry {
                     log.info("${ClientWebSocketService::getWebSocketClient.name}, retrying because of ${it.message}")
                     it is ServerNotRespondingException || it is ConnectException || it is WebSocketHandshakeException
-                }.subscribeOn(clientRegistrationElasticScheduler)
+                }.subscribeOn(Schedulers.newElastic("elastic-client-registration-scheduler"))
                 .subscribe()
     }
 

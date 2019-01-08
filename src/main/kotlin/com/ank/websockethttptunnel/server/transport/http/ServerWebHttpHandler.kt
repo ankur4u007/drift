@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.router
 import reactor.core.publisher.toMono
 import reactor.core.scheduler.Scheduler
+import reactor.core.scheduler.Schedulers
 import javax.inject.Inject
 
 @Service
@@ -52,7 +53,7 @@ class ServerWebHttpHandler @Inject constructor(
                                 }
                     }.doOnError {
                         log.error("${ServerWebHttpHandler::handle.name}, Error=${it.message}", it)
-                    }.subscribeOn(requestElasticScheduler)
+                    }.subscribeOn(Schedulers.newElastic("elastic-server-http-handler"))
             }
         }.filter { request, next ->
             next.handle(request)

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.scheduler.Scheduler
+import reactor.core.scheduler.Schedulers
 import javax.inject.Inject
 
 @Service
@@ -31,7 +32,7 @@ class ClientEventHandlerService @Inject constructor(
                 webHttpService.getResponseFromLocalServer(gossip.payload).map { responsePayload ->
                     session.sendAsyncBinaryData(gossip.copy(payload = responsePayload, event = Event.CLIENT_RESPOND),
                             clientRequestElasticScheduler, log, this::handleWebSocketRequest.name)
-                }.subscribeOn(clientRequestElasticScheduler).subscribe()
+                }.subscribeOn(Schedulers.newElastic("elastic-server-request-handler")).subscribe()
             }
             else -> {}
         }
