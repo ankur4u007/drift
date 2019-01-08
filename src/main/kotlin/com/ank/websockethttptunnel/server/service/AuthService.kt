@@ -1,5 +1,6 @@
 package com.ank.websockethttptunnel.server.service
 
+import com.ank.websockethttptunnel.common.model.Event
 import com.ank.websockethttptunnel.common.model.Gossip
 import com.ank.websockethttptunnel.server.config.ServerConfig
 import com.ank.websockethttptunnel.server.exception.ForbiddenException
@@ -18,10 +19,10 @@ class AuthService @Inject constructor(val serverConfig: ServerConfig) {
 
     fun authenticate(key: String, id: String): Flux<Gossip> {
         return if (key == "key=${serverConfig.key}") {
-            Flux.just(Gossip(status = HttpResponseStatus.OK.code(), message = "Client:$id registered successFully"))
+            Flux.just(Gossip(status = HttpResponseStatus.OK.code(), message = "Client:$id registered successFully", event = Event.CLIENT_REGISTRATION_SUCCESS))
         } else {
             log.error("${AuthService::authenticate.name}, Invalid $key, sessionId=$id")
-            Flux.error(ForbiddenException(Gossip(status = HttpResponseStatus.FORBIDDEN.code(), message = "Client registration failed")))
+            Flux.error(ForbiddenException(Gossip(status = HttpResponseStatus.FORBIDDEN.code(), message = "Client registration failed", event = Event.CLIENT_REGISTRATION_FAILED)))
         }
     }
 }

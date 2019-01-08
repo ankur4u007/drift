@@ -16,8 +16,8 @@ class ServerEventHandlerService @Inject constructor(val sessionCacheService: Ses
         val log = LoggerFactory.getLogger(ServerEventHandlerService::class.java)
     }
     fun handle(gossip: Gossip, sessionId: String): Mono<Gossip> {
-        log.info("${ServerEventHandlerService::handle.name}, gossip=$gossip, sessionId=$sessionId")
-        return when(gossip.event) {
+        log.info("${ServerEventHandlerService::handle.name}, Server Received=$gossip, sessionId=$sessionId")
+        return when (gossip.event) {
             Event.CLIENT_PING -> {
                 sessionCacheService.updateClientTimestamp(sessionId)
                 Mono.just(Gossip(event = Event.SERVER_PONG, status = HttpResponseStatus.OK.code()))

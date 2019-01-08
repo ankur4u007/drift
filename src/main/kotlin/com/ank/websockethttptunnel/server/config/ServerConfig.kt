@@ -7,13 +7,13 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 @ConfigurationProperties(prefix = "tunnel.server")
-data class ServerConfig (
+data class ServerConfig(
     var key: String? = null,
     var remoteClient: RemoteClient? = null
 
 )
 
-data class RemoteClient (
-        var evictDurationInSec: Long? = SIXTY_SECONDS,
-        var timeoutInSec: Long? = TEN_SECONDS
+data class RemoteClient(
+    var evictDurationInSec: Long? = SIXTY_SECONDS,
+    var timeoutInSec: Long? = TEN_SECONDS
 )

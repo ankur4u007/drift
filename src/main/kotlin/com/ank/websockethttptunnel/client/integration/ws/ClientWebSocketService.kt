@@ -7,7 +7,7 @@ import com.ank.websockethttptunnel.client.exception.ServerNotRespondingException
 import com.ank.websockethttptunnel.common.contants.TEN_SECONDS
 import com.ank.websockethttptunnel.common.model.Event
 import com.ank.websockethttptunnel.common.model.Gossip
-import com.ank.websockethttptunnel.common.util.orEmpty
+import com.ank.websockethttptunnel.common.util.sendAsyncBinaryData
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.util.SerializationUtils
@@ -19,55 +19,60 @@ import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.publisher.toMono
+import reactor.core.scheduler.Scheduler
 import java.net.ConnectException
 import java.net.URI
 import java.time.Duration
 import javax.inject.Inject
 
 @Service
-class WebSocketClientService @Inject constructor(val clientConfig: ClientConfig,
-                                                 val clientEventHandlerService: ClientEventHandlerService,
-                                                 val clientCacheService: ClientCacheService) {
+class ClientWebSocketService @Inject constructor(
+    val clientConfig: ClientConfig,
+    val clientEventHandlerService: ClientEventHandlerService,
+    val clientCacheService: ClientCacheService,
+    val clientRegistrationElasticScheduler: Scheduler,
+    val clientRequestElasticScheduler: Scheduler,
+    val clientPingElasticScheduler: Scheduler
+) {
     companion object {
-        val log = LoggerFactory.getLogger(WebSocketClientService::class.java)
+        val log = LoggerFactory.getLogger(ClientWebSocketService::class.java)
     }
 
-    fun getWSClient() :  Disposable{
+    fun getWebSocketClient(): Disposable {
         val fullUrl = URI.create(clientConfig.remoteServer?.url).resolve("/websocket?key=${clientConfig.remoteServer?.key}")
         val reactorNettyRequestUpgradeStrategy = ReactorNettyRequestUpgradeStrategy()
         reactorNettyRequestUpgradeStrategy.maxFramePayloadLength = 1000000000
 
-        return ReactorNettyWebSocketClient().execute(fullUrl, connectWs())
+        return ReactorNettyWebSocketClient().execute(fullUrl, handleWebSocketSession())
                 .doOnError {
                     log.error(it.message, it)
                 }.retry {
-                    log.info("${WebSocketClientService::getWSClient.name}, retrying because of ${it.message}")
+                    log.info("${ClientWebSocketService::getWebSocketClient.name}, retrying because of ${it.message}")
                     it is ServerNotRespondingException || it is ConnectException
-                }.subscribe()
+                }.subscribeOn(clientRegistrationElasticScheduler)
+                .subscribe()
     }
 
-    private fun connectWs(): (WebSocketSession) -> Mono<Void> {
+    private fun handleWebSocketSession(): (WebSocketSession) -> Mono<Void> {
         return { session ->
-            session.receive().flatMap {
+            val request = session.receive().map {
                 val gossip = SerializationUtils.deserialize(StreamUtils.copyToByteArray(it.payload.asInputStream())) as Gossip
-                gossip.toMono().map {
-                    clientEventHandlerService.handle(session, gossip)
-                }
-            }.subscribe()
-            ping().flatMap {
-                        if (clientCacheService.updateAndCheckPingStatus()) {
-                            Mono.error(ServerNotRespondingException(Gossip(message = "Server missed ${clientConfig.remoteServer?.ping?.reconnectAfterMaxMisses} pings")))
-                        } else {
-                            Mono.just(it)
-                        }
-                    }.map {
-                        session.send(session.binaryMessage {
-                            it.wrap(SerializationUtils.serialize(Gossip(event = Event.CLIENT_PING)).orEmpty())
-                        }.toMono()).onErrorResume { Mono.empty() }.subscribe()
-                it
-            }.onErrorResume {
-                Mono.error(ServerNotRespondingException(Gossip(message = "Server did not respond")))
+                clientEventHandlerService.handleWebSocketRequest(session, gossip)
             }.then()
+
+            val ping = ping().flatMap {
+                if (clientCacheService.updateAndCheckPingStatus()) {
+                    Mono.error(ServerNotRespondingException(Gossip(message = "Server missed ${clientConfig.remoteServer?.ping?.reconnectAfterMaxMisses} pings")))
+                } else {
+                    Mono.just(it)
+                }
+            }.map {
+                session.sendAsyncBinaryData(Gossip(event = Event.CLIENT_PING), clientPingElasticScheduler, log, this::handleWebSocketSession.name)
+            }.onErrorResume {
+                Mono.error(ServerNotRespondingException(Gossip(message = it.message)))
+            }.then()
+            ping
+            Flux.merge(request, ping).toMono()
         }
     }
 

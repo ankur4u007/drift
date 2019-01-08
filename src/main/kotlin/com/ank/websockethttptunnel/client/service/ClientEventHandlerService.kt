@@ -3,41 +3,36 @@ package com.ank.websockethttptunnel.client.service
 import com.ank.websockethttptunnel.client.integration.http.WebHttpService
 import com.ank.websockethttptunnel.common.model.Event
 import com.ank.websockethttptunnel.common.model.Gossip
-import com.ank.websockethttptunnel.common.util.orEmpty
+import com.ank.websockethttptunnel.common.util.sendAsyncBinaryData
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.util.SerializationUtils
 import org.springframework.web.reactive.socket.WebSocketSession
-import reactor.core.publisher.Mono
-import reactor.core.publisher.toMono
+import reactor.core.scheduler.Scheduler
 import javax.inject.Inject
 
 @Service
-class ClientEventHandlerService @Inject constructor(val clientCacheService: ClientCacheService,
-                                                    val webHttpService: WebHttpService) {
+class ClientEventHandlerService @Inject constructor(
+    val clientCacheService: ClientCacheService,
+    val webHttpService: WebHttpService,
+    val clientRequestElasticScheduler: Scheduler
+) {
     companion object {
         val log = LoggerFactory.getLogger(ClientEventHandlerService::class.java)
     }
 
-    fun handle(session: WebSocketSession, gossip: Gossip): Mono<Void>{
-        log.info("${ClientEventHandlerService::handle.name}, gossip=$gossip")
-        return when(gossip.event) {
+    fun handleWebSocketRequest(session: WebSocketSession, gossip: Gossip) {
+        log.info("${ClientEventHandlerService::handleWebSocketRequest.name}, Client Received=$gossip, sessionId=${session.id}")
+        when (gossip.event) {
             Event.SERVER_PONG -> {
                 clientCacheService.markForPong()
-                Mono.empty()
             }
             Event.SERVER_REQUEST -> {
                 clientCacheService.markForPong()
                 webHttpService.getResponseFromLocalServer(gossip.payload).map { responsePayload ->
-                    session.send(session.binaryMessage {
-                                it.wrap(SerializationUtils.serialize(gossip.copy(payload = responsePayload, event = Event.CLIENT_RESPOND)).orEmpty())
-                            }.toMono()).doOnError {
-                        log.error("${ClientEventHandlerService::handle.name}, Error=${it.message}", it)
-                    }.subscribe()
-                }.then().subscribe()
-                Mono.empty()
+                    session.sendAsyncBinaryData(gossip.copy(payload = responsePayload, event = Event.CLIENT_RESPOND),
+                            clientRequestElasticScheduler, log, this::handleWebSocketRequest.name)
+                }.subscribeOn(clientRequestElasticScheduler).subscribe()
             }
-            else -> Mono.empty()
         }
     }
 }

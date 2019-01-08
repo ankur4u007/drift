@@ -9,8 +9,9 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.socket.WebSocketSession
+import reactor.core.publisher.Mono
+import reactor.core.publisher.toFlux
 import java.util.Date
-import java.util.Random
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
@@ -18,7 +19,6 @@ import javax.inject.Inject
 class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
     companion object {
         val log = LoggerFactory.getLogger(SessionCacheService::class.java)
-
     }
 
     private val payloads = ConcurrentHashMap<String, Payload>()
@@ -28,10 +28,9 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
         activeClients.putIfAbsent(clientSession.id, ClientMetadata(id = clientSession.id, session = clientSession, lastActive = Date()))
     }
 
-    fun deRegisterClient(sessionId: String) {
-        log.info("${SessionCacheService::deRegisterClient.name}, Removing ClientId=${sessionId} from session cache")
-        activeClients.remove(sessionId)?.session?.close()?.subscribe()
-
+    fun deRegisterClient(sessionId: String): Mono<Void> {
+        log.info("${SessionCacheService::deRegisterClient.name}, Removing ClientId=$sessionId from session cache")
+        return activeClients.remove(sessionId)?.session?.close() ?: Mono.empty()
     }
 
     fun savePayload(gossip: Gossip) {
@@ -49,16 +48,18 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
         }
     }
 
-    fun evictCache() {
-        activeClients.filter {
+    fun evictCache(): Mono<Void> {
+        return activeClients.filter {
             DateTime(it.value.lastActive).plusSeconds((serverConfig.remoteClient?.evictDurationInSec
                             ?: SIXTY_SECONDS).toInt()).isBeforeNow
-        }.forEach {
-            deRegisterClient(it.key)
-        }
+        }.map {
+            it.key
+        }.toFlux().flatMap {
+            deRegisterClient(it)
+        }.then()
     }
 
-    fun getClient() : ClientMetadata? {
+    fun getClient(): ClientMetadata? {
         return if (activeClients.isNotEmpty()) {
             return activeClients.values.sortedByDescending {
                 DateTime(it.lastActive)

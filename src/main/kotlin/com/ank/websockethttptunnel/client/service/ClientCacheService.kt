@@ -18,7 +18,7 @@ class ClientCacheService @Inject constructor(clientConfig: ClientConfig) {
     fun updateAndCheckPingStatus(): Boolean {
         return synchronized(circularFifoQueue) {
             circularFifoQueue.add(true)
-            if(circularFifoQueue.count { it == true } >= circularFifoQueue.maxSize()) {
+            if (circularFifoQueue.count { it == true } >= circularFifoQueue.maxSize()) {
                 circularFifoQueue.clear()
                 true
             } else {

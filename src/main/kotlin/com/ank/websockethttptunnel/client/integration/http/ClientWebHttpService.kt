@@ -11,7 +11,6 @@ import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType
-import org.springframework.http.ReactiveHttpOutputMessage
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.BodyInserters
@@ -19,6 +18,7 @@ import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.support.ClientResponseWrapper
 import reactor.core.publisher.Mono
+import reactor.core.scheduler.Scheduler
 import reactor.netty.http.client.HttpClient
 import reactor.netty.tcp.TcpClient
 import java.lang.Exception
@@ -27,7 +27,8 @@ import java.util.Optional
 import javax.inject.Inject
 
 @Service
-class WebHttpService @Inject constructor(val clientConfig: ClientConfig){
+class WebHttpService @Inject constructor(val clientConfig: ClientConfig,
+                                         val clientRequestElasticScheduler: Scheduler) {
     companion object {
         val log = LoggerFactory.getLogger(WebHttpService::class.java)
     }
@@ -41,12 +42,6 @@ class WebHttpService @Inject constructor(val clientConfig: ClientConfig){
                 }
         WebClient.builder()
                 .baseUrl(clientConfig.localServer?.url ?: "localhost")
-                .filter { request, next ->
-                    next.exchange(request).map {
-                        HttpClientResponseWrapper(it)
-                        DefaultClientRequestBuilder(it)
-                    }
-                }
                 .clientConnector(ReactorClientHttpConnector(HttpClient.from(tcpClient)))
                 .build()
     }
@@ -59,13 +54,13 @@ class WebHttpService @Inject constructor(val clientConfig: ClientConfig){
                         .build()
             }.headers { headers ->
                 payload.headers?.forEach { header ->
-                    if(header.key.equals("host", true).not()) {
+                    if (header.key.equals("host", true).not()) {
                         headers.set(header.key, header.value)
                     }
                 }
             }.body(BodyInserters.fromObject(payload.body))
-                    .exchange()
-                    .flatMap {response ->
+                    .exchange().subscribeOn(clientRequestElasticScheduler)
+                    .flatMap { response ->
                         response.bodyToMono(ByteArray::class.java).defaultIfEmpty("".toByteArray()).map {
                             Payload(headers = response.headers().asHttpHeaders().toMultiValueMap(), body = it, status = response.rawStatusCode())
                         }
@@ -91,7 +86,5 @@ class HttpHeadersWrapper(headers: ClientResponse.Headers) : ClientResponseWrappe
 class HttpClientResponseWrapper(val delegate: ClientResponse) : ClientResponseWrapper(delegate) {
     override fun headers(): ClientResponse.Headers {
         return HttpHeadersWrapper(delegate.headers())
-        ReactiveHttpOutputMessage
     }
-
 }
