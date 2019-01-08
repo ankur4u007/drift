@@ -29,7 +29,7 @@ class ServerWebSocketConfig @Inject constructor(
     @Bean
     fun handlerAdapter(): WebSocketHandlerAdapter {
         val requestUpgradeStrategy = ReactorNettyRequestUpgradeStrategy()
-        requestUpgradeStrategy.maxFramePayloadLength = 1024 * 1024
+        requestUpgradeStrategy.maxFramePayloadLength = 1024 * 1024 * 1024
         return WebSocketHandlerAdapter(HandshakeWebSocketService(requestUpgradeStrategy))
     }
 }
