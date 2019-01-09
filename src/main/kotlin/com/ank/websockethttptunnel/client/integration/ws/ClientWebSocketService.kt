@@ -51,8 +51,8 @@ class ClientWebSocketService @Inject constructor(
                 }.retry {
                     log.info("${ClientWebSocketService::getWebSocketClient.name}, retrying because of ${it.message}")
                     it is ServerNotRespondingException || it is ConnectException || it is WebSocketHandshakeException
-                }.subscribeOn(Schedulers.newElastic("elastic-client-registration-scheduler"))
-                .publishOn(Schedulers.newElastic("elastic-client-registration-publisher"))
+                }.subscribeOn(clientRegistrationElasticScheduler)
+                .publishOn(clientRegistrationElasticScheduler)
                 .subscribe()
     }
 

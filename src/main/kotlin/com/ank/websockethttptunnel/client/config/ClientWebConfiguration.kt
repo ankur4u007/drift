@@ -14,16 +14,16 @@ class ClientWebConfiguration {
 
     @Bean
     fun clientRegistrationElasticScheduler(): Scheduler {
-        return Schedulers.newElastic("client-registration-elastic-scheduler", 60)
+        return Schedulers.newElastic("client-registration-scheduler", 60)
     }
 
     @Bean
     fun clientPingElasticScheduler(): Scheduler {
-        return Schedulers.newElastic("client-ping-elastic-scheduler", 60)
+        return Schedulers.newElastic("client-ping-scheduler", 60)
     }
 
     @Bean
     fun clientRequestElasticScheduler(): Scheduler {
-        return Schedulers.newElastic("client-request-elastic-scheduler", 300)
+        return Schedulers.newElastic("client-request-scheduler", 300)
     }
 }

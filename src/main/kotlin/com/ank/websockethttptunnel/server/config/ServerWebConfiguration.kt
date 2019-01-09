@@ -37,24 +37,24 @@ class ServerWebConfiguration @Inject constructor(
                     sessionCacheService.evictCache()
                 }.retry {
                     it is Exception
-                }.subscribeOn(Schedulers.newElastic("elastic-client-registration-sch"))
-                .publishOn(Schedulers.newElastic("elastic-client-registration-pub"))
+                }.subscribeOn(registrationElasticScheduler)
+                .publishOn(registrationElasticScheduler)
                 .subscribe()
     }
 
     @Bean
     fun registrationElasticScheduler(): Scheduler {
-        return Schedulers.newElastic("registration-elastic-scheduler", 60)
+        return Schedulers.newElastic("Server-registration-scheduler", 60)
     }
 
     @Bean
     fun pingElasticScheduler(): Scheduler {
-        return Schedulers.newElastic("ping-elastic-scheduler", 60)
+        return Schedulers.newElastic("server-ping-scheduler", 60)
     }
 
     @Bean
     fun requestElasticScheduler(): Scheduler {
-        return Schedulers.newElastic("request-elastic-scheduler", 300)
+        return Schedulers.newElastic("server-request-scheduler", 300)
     }
 
     override fun configureHttpMessageCodecs(configurer: ServerCodecConfigurer) {

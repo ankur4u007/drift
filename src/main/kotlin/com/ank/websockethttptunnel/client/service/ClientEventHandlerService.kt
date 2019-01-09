@@ -32,8 +32,7 @@ class ClientEventHandlerService @Inject constructor(
                 webHttpService.getResponseFromLocalServer(gossip.payload).map { responsePayload ->
                     session.sendAsyncBinaryData(gossip.copy(payload = responsePayload, event = Event.CLIENT_RESPOND),
                             clientRequestElasticScheduler, log, this::handleWebSocketRequest.name)
-                }.subscribeOn(Schedulers.newElastic("elastic-server-request-handler"))
-                        .publishOn(Schedulers.newElastic("elastic-server-request-handler-pub")).subscribe()
+                }.subscribeOn(clientRequestElasticScheduler).publishOn(clientRequestElasticScheduler).subscribe()
             }
             else -> {}
         }
