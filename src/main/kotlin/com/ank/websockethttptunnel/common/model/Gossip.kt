@@ -3,6 +3,7 @@ package com.ank.websockethttptunnel.common.model
 import org.springframework.http.HttpMethod
 import org.springframework.util.MultiValueMap
 import java.io.Serializable
+import java.util.*
 
 data class Gossip(
     val requestId: String? = null,
@@ -19,7 +20,8 @@ enum class Event : Serializable {
     SERVER_PONG,
     SERVER_REQUEST,
     CLIENT_RESPOND,
-    SERVER_REQUEST_ACK
+    SERVER_REQUEST_ACK,
+    CLIENT_RESPOND_END
 }
 
 data class Payload(
@@ -28,9 +30,11 @@ data class Payload(
     val queryParams: MultiValueMap<String, String>? = null,
     val headers: MultiValueMap<String, String>? = null,
     val body: ByteArray = ByteArray(0),
-    val status: Int? = null
+    val status: Int? = null,
+    val date: Date? = null,
+    val end: Boolean = false
 ) : Serializable {
     override fun toString(): String {
-        return "pyaload:[method=[$method], url=[$url], queryParams=[$queryParams], headers=[$headers], status=[$status], body=${body.size / 1024} KB"
+        return "payload:[method=[$method], url=[$url], queryParams=[$queryParams], headers=[$headers], status=[$status], body=${body.size / 1024} KB"
     }
 }

@@ -11,3 +11,5 @@ class BadRequestException(override val gossip: Gossip) : BaseException(gossip)
 
 @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
 class ClientUnavailableException(val msg: String = "Client unavailable currently.Try again after sometime") : RuntimeException(msg)
+
+class ClientTimeoutException(val msg: String = "Client timedout. Try again after sometime") : RuntimeException(msg)

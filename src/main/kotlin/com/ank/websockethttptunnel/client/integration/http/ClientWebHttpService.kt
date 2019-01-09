@@ -5,6 +5,7 @@ import com.ank.websockethttptunnel.client.exception.BadServerRequestException
 import com.ank.websockethttptunnel.common.contants.TEN_SECONDS
 import com.ank.websockethttptunnel.common.model.Gossip
 import com.ank.websockethttptunnel.common.model.Payload
+import com.ank.websockethttptunnel.common.util.toFlux
 import com.ank.websockethttptunnel.common.util.toMultiValueMap
 import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.HttpResponseStatus
@@ -12,22 +13,18 @@ import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.buffer.DefaultDataBufferFactory
-import org.springframework.http.MediaType
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.BodyInserters
-import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.support.ClientResponseWrapper
-import reactor.core.publisher.Mono
+import reactor.core.publisher.Flux
+import reactor.core.publisher.toFlux
 import reactor.core.publisher.toMono
 import reactor.core.scheduler.Scheduler
 import reactor.netty.http.client.HttpClient
 import reactor.netty.tcp.TcpClient
-import java.lang.Exception
 import java.net.URLDecoder
 import java.time.Duration
-import java.util.Optional
 import javax.inject.Inject
 
 @Service
@@ -53,7 +50,7 @@ class WebHttpService @Inject constructor(
                 .build()
     }
 
-    fun getResponseFromLocalServer(payload: Payload?): Mono<Payload> {
+    fun getResponseFromLocalServer(payload: Payload?): Flux<Payload> {
         return payload?.method?.let {
             webHttpClient.method(payload.method).uri {
                 it.path(URLDecoder.decode(payload.url.orEmpty(), "UTF-8"))
@@ -66,18 +63,19 @@ class WebHttpService @Inject constructor(
                     }
                 }
             }.body(BodyInserters.fromObject(payload.body))
-                    .exchange().subscribeOn(clientRequestElasticScheduler)
+                    .exchange().toFlux()
+                    .subscribeOn(clientRequestElasticScheduler)
                     .publishOn(clientRequestElasticScheduler)
                     .flatMap { response ->
                         response.body { inputMessage, _ ->
-                            inputMessage.body.collectList().map {
+                            inputMessage.body.buffer(100).map {
                                 val byteBuffer = bufferFactory.join(it).asByteBuffer()
                                 val bytes = ByteArray(byteBuffer.capacity())
                                 byteBuffer.get(bytes, 0, bytes.size)
                                 byteBuffer.clear()
                                 bytes
                             }.flatMap {
-                                Payload(headers = response.headers().asHttpHeaders().toMultiValueMap(), body = it, status = response.rawStatusCode()).toMono()
+                                payload.copy(headers = response.headers().asHttpHeaders().toMultiValueMap(), body = it, status = response.rawStatusCode()).toFlux()
                             }
                         }
                     }.doOnError {
@@ -87,22 +85,6 @@ class WebHttpService @Inject constructor(
                     }.onErrorResume {
                         Payload(status = HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), body = "INTERNAL_SERVER_ERROR".toByteArray()).toMono()
                     }
-        } ?: Mono.error<Payload>(BadServerRequestException(Gossip(message = "Invalid HTTP Method")))
-    }
-}
-
-class HttpHeadersWrapper(headers: ClientResponse.Headers) : ClientResponseWrapper.HeadersWrapper(headers) {
-    override fun contentType(): Optional<MediaType> {
-        return try {
-            super.contentType()
-        } catch (ex: Exception) {
-            Optional.empty()
-        }
-    }
-}
-
-class HttpClientResponseWrapper(val delegate: ClientResponse) : ClientResponseWrapper(delegate) {
-    override fun headers(): ClientResponse.Headers {
-        return HttpHeadersWrapper(delegate.headers())
+        } ?: Flux.error(BadServerRequestException(Gossip(message = "Invalid HTTP Method")))
     }
 }

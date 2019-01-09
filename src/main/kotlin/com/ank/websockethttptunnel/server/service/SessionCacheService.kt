@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono
 import reactor.core.publisher.toFlux
 import java.util.Date
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
 import javax.inject.Inject
 
 @Service
@@ -21,7 +22,7 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
         val log = LoggerFactory.getLogger(SessionCacheService::class.java)
     }
 
-    private val payloads = ConcurrentHashMap<String, Payload>()
+    private val payloads = ConcurrentHashMap<String, LinkedBlockingQueue<Payload>>()
     private val activeClients = ConcurrentHashMap<String, ClientMetadata>()
 
     fun registerClient(clientSession: WebSocketSession) {
@@ -34,11 +35,17 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
     }
 
     fun savePayload(gossip: Gossip) {
-        payloads.putIfAbsent(gossip.requestId.orEmpty(), gossip.payload ?: Payload())
+        payloads.get(gossip.requestId.orEmpty())?.let { queue ->
+            gossip.payload?.let {
+                queue.offer(it.copy(date = Date()))
+            }
+        } ?: gossip.payload?.let {
+            payloads.put(gossip.requestId.orEmpty(), LinkedBlockingQueue(listOf(gossip.payload.copy(date = Date()))))
+        }
     }
 
     fun getPayload(requestId: String): Payload? {
-        return payloads.remove(requestId)
+        return payloads.get(requestId)?.poll()
     }
 
     fun updateClientTimestamp(sessionId: String) {
@@ -48,7 +55,7 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
         }
     }
 
-    fun evictCache(): Mono<Void> {
+    fun evictStaleClientSession(): Mono<Void> {
         return activeClients.filter {
             DateTime(it.value.lastActive).plusSeconds((serverConfig.remoteClient?.evictDurationInSec
                             ?: SIXTY_SECONDS).toInt()).isBeforeNow
@@ -57,6 +64,16 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
         }.toFlux().flatMap {
             deRegisterClient(it)
         }.then()
+    }
+
+    fun evictStalePayloads(seconds: Long) {
+        payloads.filter {
+            it.value.isNullOrEmpty() || DateTime(it.value.peek().date).isBefore(DateTime().minusSeconds(seconds.toInt()))
+        }.map {
+            it.key
+        }.forEach {
+            payloads.remove(it)
+        }
     }
 
     fun getClient(): ClientMetadata? {

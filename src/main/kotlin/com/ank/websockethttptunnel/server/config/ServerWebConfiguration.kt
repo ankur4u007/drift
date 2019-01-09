@@ -31,15 +31,33 @@ class ServerWebConfiguration @Inject constructor(
 ) : WebFluxConfigurer {
 
     @Bean
-    fun startCacheEviction(registrationElasticScheduler: Scheduler): Disposable {
+    fun startStaleClientSessionEviction(evictionElasticScheduler: Scheduler): Disposable {
         return Flux.interval(Duration.ofSeconds(serverConfig.remoteClient?.evictDurationInSec ?: SIXTY_SECONDS))
                 .map {
-                    sessionCacheService.evictCache()
+                    sessionCacheService.evictStaleClientSession()
                 }.retry {
                     it is Exception
-                }.subscribeOn(registrationElasticScheduler)
-                .publishOn(registrationElasticScheduler)
+                }.subscribeOn(evictionElasticScheduler)
+                .publishOn(evictionElasticScheduler)
                 .subscribe()
+    }
+
+    @Bean
+    fun startStalePayloadEviction(evictionElasticScheduler: Scheduler): Disposable {
+        val intervalInSeconds :Long = 1
+        return Flux.interval(Duration.ofSeconds(intervalInSeconds))
+                .map {
+                    sessionCacheService.evictStalePayloads(intervalInSeconds)
+                }.retry {
+                    it is Exception
+                }.subscribeOn(evictionElasticScheduler)
+                .publishOn(evictionElasticScheduler)
+                .subscribe()
+    }
+
+    @Bean
+    fun evictionElasticScheduler(): Scheduler {
+        return Schedulers.newElastic("server-eviction-scheduler", 60)
     }
 
     @Bean

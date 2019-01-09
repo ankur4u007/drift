@@ -6,6 +6,7 @@ import org.springframework.util.MultiValueMap
 import org.springframework.util.SerializationUtils
 import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.Disposable
+import reactor.core.publisher.Flux
 import reactor.core.publisher.toMono
 import reactor.core.scheduler.Scheduler
 
@@ -32,3 +33,5 @@ fun <T> WebSocketSession.sendAsyncBinaryData(data: T, scheduler: Scheduler, log:
         log.error("op=$methodName, ${it.message}", it)
     }.subscribe()
 }
+
+fun <T> T.toFlux(): Flux<T> = Flux.just(this)

@@ -42,14 +42,14 @@ class ServerWebHttpHandler @Inject constructor(
                                                 responsePayload.headers?.forEach {
                                                     if (it.key.equals("host", true).not()) {
                                                         headers[it.key] = it.value
-                                                        log.info("key:${it.key}, value:${it.value}")
+                                                        log.info("url:${payload.url}, key:${it.key}, value:${it.value}")
                                                     }
                                                 }
                                             }.body { outputMessage, _ ->
                                                 outputMessage.writeWith(
                                                         bufferFactory.wrap(responsePayload.body).toMono())
                                             }
-                                }
+                                }.toMono()
                     }.doOnError {
                         log.error("${ServerWebHttpHandler::handle.name}, Error=${it.message}", it)
                     }.subscribeOn(requestElasticScheduler)
