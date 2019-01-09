@@ -32,7 +32,6 @@ class ClientWebSocketService @Inject constructor(
     val clientEventHandlerService: ClientEventHandlerService,
     val clientCacheService: ClientCacheService,
     val clientRegistrationElasticScheduler: Scheduler,
-    val clientRequestElasticScheduler: Scheduler,
     val clientPingElasticScheduler: Scheduler
 ) {
     companion object {

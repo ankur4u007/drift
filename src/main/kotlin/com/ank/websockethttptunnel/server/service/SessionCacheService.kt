@@ -38,7 +38,7 @@ class SessionCacheService @Inject constructor(val serverConfig: ServerConfig) {
     }
 
     fun getPayload(requestId: String): Payload? {
-        return payloads.get(requestId)
+        return payloads.remove(requestId)
     }
 
     fun updateClientTimestamp(sessionId: String) {
