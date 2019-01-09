@@ -28,12 +28,12 @@ import java.time.Duration
 import javax.inject.Inject
 
 @Service
-class WebHttpService @Inject constructor(
+class ClientWebHttpService @Inject constructor(
     val clientConfig: ClientConfig,
     val clientRequestElasticScheduler: Scheduler
 ) {
     companion object {
-        val log = LoggerFactory.getLogger(WebHttpService::class.java)
+        val log = LoggerFactory.getLogger(ClientWebHttpService::class.java)
         val bufferFactory = DefaultDataBufferFactory()
     }
 
@@ -79,9 +79,9 @@ class WebHttpService @Inject constructor(
                             }
                         }
                     }.doOnError {
-                        log.error("${WebHttpService::getResponseFromLocalServer.name}, Error=${it.message}", it)
+                        log.error("${ClientWebHttpService::getResponseFromLocalServer.name}, Error=${it.message}", it)
                     }.doOnNext {
-                        log.info("${WebHttpService::getResponseFromLocalServer.name}, Response=$it")
+                        log.info("${ClientWebHttpService::getResponseFromLocalServer.name}, Response=$it")
                     }.onErrorResume {
                         Payload(status = HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), body = "INTERNAL_SERVER_ERROR".toByteArray()).toMono()
                     }

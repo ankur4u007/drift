@@ -15,7 +15,7 @@ import javax.inject.Inject
 @Configuration
 @ComponentScan("com.ank.websockethttptunnel.client")
 @ConditionalOnProperty(name = ["tunnel.client.enabled"], havingValue = "true")
-class ClientWebConfiguration @Inject constructor(val clientCacheService: ClientCacheService){
+class ClientWebConfiguration @Inject constructor(val clientCacheService: ClientCacheService) {
 
     @Bean
     fun clientRegistrationElasticScheduler(): Scheduler {
@@ -39,7 +39,7 @@ class ClientWebConfiguration @Inject constructor(val clientCacheService: ClientC
 
     @Bean
     fun startStaleResponseEviction(clientEvictionElasticScheduler: Scheduler): Disposable {
-        val intervalInSeconds :Long = 10
+        val intervalInSeconds: Long = 10
         return Flux.interval(Duration.ofSeconds(intervalInSeconds))
                 .map {
                     clientCacheService.evictStaleResponses()

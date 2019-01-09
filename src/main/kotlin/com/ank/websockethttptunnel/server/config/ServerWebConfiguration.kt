@@ -44,7 +44,7 @@ class ServerWebConfiguration @Inject constructor(
 
     @Bean
     fun startStalePayloadEviction(evictionElasticScheduler: Scheduler): Disposable {
-        val intervalInSeconds :Long = 1
+        val intervalInSeconds: Long = 1
         return Flux.interval(Duration.ofSeconds(intervalInSeconds))
                 .map {
                     sessionCacheService.evictStalePayloads(intervalInSeconds)

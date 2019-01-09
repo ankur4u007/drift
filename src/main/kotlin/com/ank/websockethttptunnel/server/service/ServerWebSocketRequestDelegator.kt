@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.core.publisher.toFlux
 import reactor.core.publisher.toMono
 import reactor.core.scheduler.Scheduler
 import java.time.Duration
@@ -37,11 +36,11 @@ class ServerWebSocketRequestDelegator @Inject constructor(
                     requestElasticScheduler, log, this::getResponse.name)
             return Flux.interval(Duration.ofMillis(200))
                     .flatMap { sessionCacheService.getPayload(requestId)?.toMono() ?: Mono.empty() }
-                    .takeUntil { payload -> payload.end}
+                    .takeUntil { payload -> payload.end }
                     .timeout(Duration.ofSeconds(serverConfig.remoteClient?.timeoutInSec ?: TEN_SECONDS))
                     .filter { it != null }
                     .onErrorMap {
-                        if(it is TimeoutException) {
+                        if (it is TimeoutException) {
                             ClientTimeoutException()
                         } else {
                             it

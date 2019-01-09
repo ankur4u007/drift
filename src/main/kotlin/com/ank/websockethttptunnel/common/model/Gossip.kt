@@ -3,7 +3,7 @@ package com.ank.websockethttptunnel.common.model
 import org.springframework.http.HttpMethod
 import org.springframework.util.MultiValueMap
 import java.io.Serializable
-import java.util.*
+import java.util.Date
 
 data class Gossip(
     val requestId: String? = null,
