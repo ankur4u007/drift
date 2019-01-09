@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
 import org.slf4j.LoggerFactory
+import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.http.MediaType
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.stereotype.Service
@@ -23,8 +24,6 @@ import reactor.core.publisher.toMono
 import reactor.core.scheduler.Scheduler
 import reactor.netty.http.client.HttpClient
 import reactor.netty.tcp.TcpClient
-import java.io.InputStream
-import java.io.SequenceInputStream
 import java.lang.Exception
 import java.net.URLDecoder
 import java.time.Duration
@@ -38,6 +37,7 @@ class WebHttpService @Inject constructor(
 ) {
     companion object {
         val log = LoggerFactory.getLogger(WebHttpService::class.java)
+        val bufferFactory = DefaultDataBufferFactory()
     }
 
     val webHttpClient: WebClient by lazy {
@@ -70,11 +70,14 @@ class WebHttpService @Inject constructor(
                     .publishOn(clientRequestElasticScheduler)
                     .flatMap { response ->
                         response.body { inputMessage, _ ->
-                            inputMessage.body.reduce(object : InputStream() {
-                                override fun read() = -1
-                            }) { s: InputStream, d -> SequenceInputStream(s, d.asInputStream())
+                            inputMessage.body.collectList().map {
+                                val byteBuffer = bufferFactory.join(it).asByteBuffer()
+                                val bytes = ByteArray(byteBuffer.capacity())
+                                byteBuffer.get(bytes, 0, bytes.size)
+                                byteBuffer.clear()
+                                bytes
                             }.flatMap {
-                                Payload(headers = response.headers().asHttpHeaders().toMultiValueMap(), body = it.readBytes(), status = response.rawStatusCode()).toMono()
+                                Payload(headers = response.headers().asHttpHeaders().toMultiValueMap(), body = it, status = response.rawStatusCode()).toMono()
                             }
                         }
                     }.doOnError {

@@ -34,6 +34,11 @@ apply plugin: 'io.spring.dependency-management'
 apply plugin: 'application'
 apply plugin: "org.jlleitschuh.gradle.ktlint"
 
+bootRun {
+	// support passing -Dsystem.property=value to bootRun task
+	systemProperties = System.properties
+}
+
 group = 'com.ank'
 sourceCompatibility = 1.8
 mainClassName = 'com.ank.websockethttptunnel.ApplicationKt'
