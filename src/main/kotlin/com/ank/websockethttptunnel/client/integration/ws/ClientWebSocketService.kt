@@ -69,8 +69,8 @@ class ClientWebSocketService @Inject constructor(
                 }
             }.map {
                 session.sendAsyncBinaryData(Gossip(event = Event.CLIENT_PING), clientPingElasticScheduler, log, this::handleWebSocketSession.name)
-            }.onErrorResume {
-                Mono.error(ServerNotRespondingException(Gossip(message = it.message)))
+            }.doOnError {
+                log.error(it.message, it)
             }.then()
             Flux.merge(request, ping).toMono()
         }
