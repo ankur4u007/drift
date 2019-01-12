@@ -4,4 +4,4 @@ WORKDIR /home
 
 COPY build/libs/websocketHttpTunnel.jar .
 
-ENTRYPOINT java -jar websocketHttpTunnel.jar
+ENTRYPOINT java -jar drift.jar

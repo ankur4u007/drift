@@ -41,7 +41,7 @@ bootRun {
 
 group = 'com.ank'
 sourceCompatibility = 1.8
-mainClassName = 'com.ank.websockethttptunnel.ApplicationKt'
+mainClassName = 'com.ank.drift.ApplicationKt'
 
 compileKotlin {
 	kotlinOptions {

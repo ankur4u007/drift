@@ -6,7 +6,7 @@
         </Console>
     </Appenders>
     <Loggers>
-        <AsyncLogger name="com.ank.websockethttptunnel" level="INFO" additivity="false">
+        <AsyncLogger name="com.ank.drift" level="INFO" additivity="false">
             <AppenderRef ref="ConsoleAppender"/>
         </AsyncLogger>
         <AsyncRoot level="INFO" additivity="false">
