@@ -25,6 +25,9 @@ The drift app can be run int following three modes:
  - CLIENT
  - SERVER AND CLIENT
  
+The applciation is published at docker as ```ankur4u007/drift```, so to run it as docker(easier) you must have docker installed.
+If you prefer `gradle` way of running things please refer to [Build and Run locally](#gradle-build) section.
+ 
 To run as server: 
     ```docker run -it --net=host -e "TUNNEL__SERVER__ENABLED=TRUE" ankur4u007/drift```
 
@@ -34,7 +37,10 @@ To run as client:
 To run as both the server and client: 
     ```docker run -it --net=host -e "TUNNEL__SERVER__ENABLED=TRUE" -e "TUNNEL__CLIENT__ENABLED=TRUE" ankur4u007/drift```
 
-###Build and locally 
+### <a name="gradle-build"></a> Build and Run locally 
 The app is developed using spring reactive and can be easily build and run with `gradlew`
  - To build: ```./gradlew clean build```
  - To run locally: ```./gradlew clean run```
+ 
+Additionally you can also build docker images after you have built with gradle. To do so simple run: 
+```docker build --force-rm -t ankur4u007/drift .```
