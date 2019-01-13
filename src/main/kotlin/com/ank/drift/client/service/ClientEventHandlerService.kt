@@ -28,15 +28,24 @@ class ClientEventHandlerService @Inject constructor(
             }
             Event.SERVER_REQUEST -> {
                 clientCacheService.markForPong()
-                val localServerResponse = clientWebHttpService.getResponseFromLocalServer(gossip.payload).map { responsePayload ->
-                    session.sendAsyncBinaryData(gossip.copy(payload = responsePayload, event = Event.CLIENT_RESPOND),
-                            clientRequestElasticScheduler, log, this::handleWebSocketRequest.name)
-                }.subscribeOn(clientRequestElasticScheduler).publishOn(clientRequestElasticScheduler)
+                val responseDisposable = clientWebHttpService.getResponseFromLocalServer(gossip.payload)
+                        .buffer(1000)
+                        .map {
+                            val reducedPayload = it.reduce { accumulatedPayload, payload ->
+                                val temp = ByteArray(accumulatedPayload.body.size + payload.body.size)
+                                System.arraycopy(accumulatedPayload.body, 0, temp, 0, accumulatedPayload.body.size)
+                                System.arraycopy(payload.body, 0, temp, accumulatedPayload.body.size, payload.body.size)
+                                accumulatedPayload.copy(body = temp)
+                            }
+                            session.sendAsyncBinaryData(gossip.copy(payload = reducedPayload, event = Event.CLIENT_RESPOND),
+                                    clientRequestElasticScheduler, log, this::handleWebSocketRequest.name)
+                        }.subscribeOn(clientRequestElasticScheduler)
+                        .publishOn(clientRequestElasticScheduler)
                         .doOnComplete {
                             session.sendAsyncBinaryData(gossip.copy(payload = gossip.payload?.copy(end = true), event = Event.CLIENT_RESPOND_END),
                                     clientRequestElasticScheduler, log, this::handleWebSocketRequest.name)
                         }.subscribe()
-                clientCacheService.saveResponses(gossip.requestId.orEmpty(), localServerResponse)
+                clientCacheService.saveResponses(gossip.requestId.orEmpty(), responseDisposable)
             }
             Event.SERVER_REQUEST_ACK -> {
                 clientCacheService.acknowledgeResponse(gossip.requestId.orEmpty())

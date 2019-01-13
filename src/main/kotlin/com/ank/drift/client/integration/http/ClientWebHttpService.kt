@@ -12,7 +12,6 @@ import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.timeout.ReadTimeoutHandler
 import io.netty.handler.timeout.WriteTimeoutHandler
 import org.slf4j.LoggerFactory
-import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.BodyInserters
@@ -25,6 +24,7 @@ import reactor.netty.http.client.HttpClient
 import reactor.netty.tcp.TcpClient
 import java.net.URLDecoder
 import java.time.Duration
+import java.util.Date
 import javax.inject.Inject
 
 @Service
@@ -34,7 +34,6 @@ class ClientWebHttpService @Inject constructor(
 ) {
     companion object {
         val log = LoggerFactory.getLogger(ClientWebHttpService::class.java)
-        val bufferFactory = DefaultDataBufferFactory()
     }
 
     val webHttpClient: WebClient by lazy {
@@ -51,6 +50,7 @@ class ClientWebHttpService @Inject constructor(
     }
 
     fun getResponseFromLocalServer(payload: Payload?): Flux<Payload> {
+        val startedTime = Date()
         return payload?.method?.let {
             webHttpClient.method(payload.method).uri {
                 it.path(URLDecoder.decode(payload.url.orEmpty(), "UTF-8"))
@@ -63,17 +63,19 @@ class ClientWebHttpService @Inject constructor(
                     }
                 }
             }.body(BodyInserters.fromObject(payload.body))
-                    .exchange().toFlux()
-                    .subscribeOn(clientRequestElasticScheduler)
+                    .exchange()
+                    .toFlux()
                     .publishOn(clientRequestElasticScheduler)
+                    .subscribeOn(clientRequestElasticScheduler)
                     .flatMap { response ->
                         response.body { inputMessage, _ ->
-                            inputMessage.body.buffer(100).map {
-                                val byteBuffer = bufferFactory.join(it).asByteBuffer()
-                                val bytes = ByteArray(byteBuffer.capacity())
-                                byteBuffer.get(bytes, 0, bytes.size)
-                                byteBuffer.clear()
-                                bytes
+                            inputMessage.body
+                                    .map {
+                                        val byteBuffer = it.asByteBuffer()
+                                        val bytes = ByteArray(byteBuffer.capacity())
+                                        byteBuffer.get(bytes, 0, bytes.size)
+                                        byteBuffer.clear()
+                                        bytes
                             }.flatMap {
                                 payload.copy(headers = response.headers().asHttpHeaders().toMultiValueMap(), body = it, status = response.rawStatusCode()).toFlux()
                             }
@@ -81,9 +83,11 @@ class ClientWebHttpService @Inject constructor(
                     }.doOnError {
                         log.error("${ClientWebHttpService::getResponseFromLocalServer.name}, Error=${it.message}", it)
                     }.doOnNext {
-                        log.info("${ClientWebHttpService::getResponseFromLocalServer.name}, Response=$it")
+//                        log.info("${ClientWebHttpService::getResponseFromLocalServer.name}, Response=$it")
                     }.onErrorResume {
                         Payload(status = HttpResponseStatus.INTERNAL_SERVER_ERROR.code(), body = "INTERNAL_SERVER_ERROR".toByteArray()).toMono()
+                    }.doFinally {
+                        log.info("${::getResponseFromLocalServer.name} url=${payload.url} is ${it.name} with ${Date().toInstant().minusMillis(startedTime.toInstant().toEpochMilli()).toEpochMilli()} milli seconds")
                     }
         } ?: Flux.error(BadServerRequestException(Gossip(message = "Invalid HTTP Method")))
     }

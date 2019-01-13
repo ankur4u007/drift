@@ -7,7 +7,7 @@ import org.springframework.test.context.junit4.SpringRunner
 
 @RunWith(SpringRunner::class)
 @SpringBootTest(classes = arrayOf(Application::class))
-class WebsocketTunnelApplicationTests {
+class DriftApplicationTests {
 
     @Test
     fun contextLoads() {

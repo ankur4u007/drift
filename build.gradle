@@ -86,3 +86,9 @@ configurations {
 jar.enabled = false
 
 ktlintMainCheck.dependsOn(ktlintFormat)
+
+processResources {
+	from ('documentation') {
+		into 'documentation'
+	}
+}

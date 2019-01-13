@@ -1,6 +1,7 @@
 package com.ank.drift.client.config
 
 import com.ank.drift.client.service.ClientCacheService
+import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
@@ -48,5 +49,14 @@ class ClientWebConfiguration @Inject constructor(val clientCacheService: ClientC
                 }.subscribeOn(clientEvictionElasticScheduler)
                 .publishOn(clientEvictionElasticScheduler)
                 .subscribe()
+    }
+
+    @Bean
+    fun startClient(): CommandLineRunner {
+        return CommandLineRunner {
+            fun run(vararg args: String?) {
+                TODO("not implemented") // To change body of created functions use File | Settings | File Templates.
+            }
+        }
     }
 }
