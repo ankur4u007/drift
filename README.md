@@ -47,7 +47,8 @@ The app is developed using spring reactive and can be easily build and run with 
     - to run as server: simply set the value `tunnel.server.enabled` to `true` inside `src/main/resources/application.yml`
     - to run as both server and client, set both `tunnel.client.enabled` and `tunnel.server.enabled` to true.
  
-<a name="build-docker-image">Additionally you can also build docker images after you have built with gradle. To do so simple run: 
+#####  <a name="build-docker-image"> Build using docker: 
+Additionally you can also build docker images after you have built with gradle. To do so simple run: 
 ```docker build --force-rm -t ankur4u007/drift .```
 
 ####  <a name="using-docker-on-mac"> Running using docker on a mac ?
