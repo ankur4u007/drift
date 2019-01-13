@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 serverOn=${TUNNEL__SERVER__ENABLED}
 serverPort=${TUNNEL__SERVER__PORT}
