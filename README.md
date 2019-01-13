@@ -4,14 +4,14 @@
 
 A Websocket-Http Tunnel written in kotlin that lets you access any HTTP Api on servers deployed behind firewall(s)/Nat(s)/Proxy
 
-### What is drift?
+## What is drift?
 Drift lets you deploy any application anywhere and expose it on internet via a websocket-http tunnels. 
 So how does it look like?
 
 ![drift architecture](documentation/drift_architecture.png)
 
 
-### How does it work ?
+## How does it work ?
 Preconditions:
 Your client should have access to internet/drift server.
 The drift client establishes a connection to the drift server over outbound http which is usually not blocked by firewalls.
@@ -19,7 +19,7 @@ The drift server then sends an upgrade, upgrading just established http connecti
 Now your drift server is ready to accept incoming traffic and forward it to you app server deployed via the websocket connection.
  
  
-### Getting Started
+## Getting Started
 The drift app can be run int following three modes:
  - SERVER
  - CLIENT
@@ -39,7 +39,7 @@ To run as client:
 To run as both the server and client: 
     ```docker run -it --net=host -e "TUNNEL__SERVER__ENABLED=TRUE" -e "TUNNEL__CLIENT__ENABLED=TRUE" ankur4u007/drift```
 
-### <a name="gradle-build"></a> Build and Run locally using gradle 
+## <a name="gradle-build"></a> Build and Run locally using gradle 
 The app is developed using spring reactive and can be easily build and run with `gradlew`
  - To build: ```./gradlew clean build```
  - To run locally: ```./gradlew clean run```.
@@ -47,11 +47,11 @@ The app is developed using spring reactive and can be easily build and run with 
     - to run as server: simply set the value `tunnel.server.enabled` to `true` inside `src/main/resources/application.yml`
     - to run as both server and client, set both `tunnel.client.enabled` and `tunnel.server.enabled` to true.
  
-#####  <a name="build-docker-image"> Build using docker: 
+###  <a name="build-docker-image"> Build using docker: 
 Additionally you can also build docker images after you have built with gradle. To do so simple run: 
 ```docker build --force-rm -t ankur4u007/drift .```
 
-####  <a name="using-docker-on-mac"> Running using docker on a mac ?
+##  <a name="using-docker-on-mac"> Running using docker on a mac ?
 well docker-for-mac doesn't yet fully support the ```--net=host``` mode, so the best option you have is to run either 
 everything(drift client, drift server, and local app server) inside docker.
 
@@ -73,7 +73,7 @@ Docker ps output for driver client server looks like:
 ```
 Now you can ```hit http://localhost:8080``` to see the result.
 
-### Configurations
+## Configurations
 The drift server and app has a number of configurations available. Most of them are defaulted to some appropriate value.
 Neverthless they can be changed using environment variable.
 Below are list of available configuration options that can be changed :
