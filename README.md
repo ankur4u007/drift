@@ -4,14 +4,14 @@
 
 A Websocket-Http Tunnel written in kotlin that lets you access any HTTP Api on servers deployed behind firewall(s)/Nat(s)/Proxy
 
-###What is drift?
+### What is drift?
 Drift lets you deploy any application anywhere and expose it on internet via a websocket-http tunnels. 
 So how does it look like?
 
 ![drift architecture](documentation/drift_architecture.png)
 
 
-###How does it work ?
+### How does it work ?
 Preconditions:
 Your client should have access to internet/drift server.
 The drift client establishes a connection to the drift server over outbound http which is usually not blocked by firewalls.
@@ -19,7 +19,7 @@ The drift server then sends an upgrade, upgrading just established http connecti
 Now your drift server is ready to accept incoming traffic and forward it to you app server deployed via the websocket connection.
  
  
-###Getting Started
+### Getting Started
 The drift app can be run int following three modes:
  - SERVER
  - CLIENT
