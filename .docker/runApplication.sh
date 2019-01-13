@@ -6,13 +6,13 @@ env=""
 
 if [ "$serverOn" == "true" ] || [ "$serverOn" == "TRUE" ] ; then
     env=$env" -DSPRING__MAIN__WEB-APPLICATION-TYPE=REACTIVE"
-    if [ -v "$serverPort" ]; then
-        env=$env" -DSERVER__PORT=${serverPort}"
+    if [ "$serverPort"1 != "1" ] ; then
+        env=$env" -Dserver.port=${serverPort}"
     fi
 else
-   env=$env" -DSPRING__MAIN__WEB-APPLICATION-TYPE=NONE"
+   env=$env" -Dspring.main.web-application-type=NONE"
 fi
 
-cmdToRun="java $env -jar drift.jar"
+cmdToRun="java$env -jar drift.jar"
 echo "starting command: $cmdToRun"
 $cmdToRun
