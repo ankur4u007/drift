@@ -7,3 +7,5 @@ COPY src/main/resources/application.yml .
 COPY .docker/runApplication.sh .
 
 ENTRYPOINT sh /home/runApplication.sh
+
+EXPOSE 8080

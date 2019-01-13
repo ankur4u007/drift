@@ -1,14 +1,10 @@
 #!/bin/sh
 
 serverOn=${TUNNEL__SERVER__ENABLED}
-serverPort=${TUNNEL__SERVER__PORT}
 env=""
 
 if [ "$serverOn" == "true" ] || [ "$serverOn" == "TRUE" ] ; then
     env=$env" -DSPRING__MAIN__WEB-APPLICATION-TYPE=REACTIVE"
-    if [ "$serverPort"1 != "1" ] ; then
-        env=$env" -Dserver.port=${serverPort}"
-    fi
 else
    env=$env" -Dspring.main.web-application-type=NONE"
 fi
